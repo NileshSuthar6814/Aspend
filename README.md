@@ -1,6 +1,7 @@
 # aspend
 
-A new Flutter project.
+A Flutter project.
+With material theme and dynamic colors.
 
 ## Getting Started
 
