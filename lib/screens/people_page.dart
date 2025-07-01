@@ -1,82 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/person_provider.dart';
 import '../person/person_details_page.dart';
 import '../providers/theme_provider.dart';
 
-class PeopleTab extends StatelessWidget {
+class PeopleTab extends StatefulWidget {
   const PeopleTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final personProvider = context.watch<PersonProvider>();
-    final people = personProvider.people;
-    final isDark = context.watch<AppThemeProvider>().isDarkMode;
+  State<PeopleTab> createState() => _PeopleTabState();
+}
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('People'),
-        backgroundColor: isDark ? Colors.teal[900] : Colors.teal[100],
-      ),
-      body: people.isEmpty
-          ? const Center(
-              child: Text(
-              "No people added yet",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ))
-          : ListView.builder(
-              itemCount: people.length,
-              itemBuilder: (_, idx) {
-                final person = people[idx];
-                final total = personProvider.totalFor(person.name);
-                final isPositive = total >= 0;
+class _PeopleTabState extends State<PeopleTab> {
+  late ScrollController _scrollController;
+  bool _showFab = true;
 
-                return Card(
-                  //dynamic color
-                  color: isDark ? Colors.teal[900] : Colors.teal[50],
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18)),
-                  elevation: 3,
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 18, vertical: 10),
-                    title: Text(
-                      person.name,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    trailing: Text(
-                      'Total: ₹${total.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        color: isPositive ? Colors.green : Colors.red,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    subtitle: const Text("Tap to view transactions"),
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => PersonDetailPage(person: person),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
-      floatingActionButton: FloatingActionButton(
-          child: const Icon(Icons.person_add),
-          onPressed: () {
-            _showAddPersonDialog(context);
-            HapticFeedback.lightImpact();
-          }),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+
+    _scrollController.addListener(() {
+      final direction = _scrollController.position.userScrollDirection;
+      if (direction == ScrollDirection.reverse && _showFab) {
+        setState(() => _showFab = false);
+      } else if (direction == ScrollDirection.forward && !_showFab) {
+        setState(() => _showFab = true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _showAddPersonDialog(BuildContext context) {
@@ -91,8 +50,9 @@ class PeopleTab extends StatelessWidget {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
             onPressed: () {
               final name = controller.text.trim();
@@ -106,6 +66,82 @@ class PeopleTab extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final personProvider = context.watch<PersonProvider>();
+    final people = personProvider.people;
+    final isDark = context.watch<AppThemeProvider>().isDarkMode;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('People'),
+        backgroundColor: isDark ? Colors.teal[900] : Colors.teal[100],
+      ),
+      body: people.isEmpty
+          ? const Center(
+        child: Text(
+          "No people added yet",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      )
+          : ListView.builder(
+        controller: _scrollController,
+        itemCount: people.length,
+        itemBuilder: (_, idx) {
+          final person = people[idx];
+          final total = personProvider.totalFor(person.name);
+          final isPositive = total >= 0;
+
+          return Card(
+            color: isDark ? Colors.teal[900] : Colors.teal[50],
+            margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            elevation: 4,
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              title: Text(
+                person.name,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: const Text("Tap to view transactions"),
+              trailing: Text(
+                '₹${total.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: isPositive ? Colors.green : Colors.red,
+                ),
+              ),
+              onTap: () {
+                HapticFeedback.lightImpact();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PersonDetailPage(person: person),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+      floatingActionButton: _showFab
+          ? FloatingActionButton(
+        onPressed: () {
+          _showAddPersonDialog(context);
+          HapticFeedback.lightImpact();
+        },
+        child: const Icon(Icons.person_add),
+      )
+          : null,
     );
   }
 }
