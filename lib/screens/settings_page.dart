@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:aspends_tracker/providers/theme_provider.dart';
 import 'package:flutter/services.dart';
+import 'package:hive/hive.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 import '../backup/export_csv.dart';
 import '../backup/import_csv.dart';
 import '../backup/person_backup_helper.dart';
+import '../models/person.dart';
+import '../models/person_transaction.dart';
 import '../models/theme.dart';
 import '../providers/transaction_provider.dart';
 import '../services/pdf_service.dart';
@@ -85,7 +88,7 @@ class _SettingsPageState extends State<SettingsPage> {
         Container(
           //padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             child: Card(
               elevation: 3,
               shape: RoundedRectangleBorder(
@@ -193,12 +196,26 @@ class _SettingsPageState extends State<SettingsPage> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("All data deleted")),
               );
+              //wait some 3 second
+              Future.delayed(3 as Duration);
+              await deleteAllPeopleAndTransactions();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('All person data deleted')),
+              );
+
             },
           ),
         ],
       ),
     );
   }
+}
+Future<void> deleteAllPeopleAndTransactions() async {
+  final peopleBox = Hive.box<Person>('people');
+  final transactionsBox = Hive.box<PersonTransaction>('personTransactions');
+
+  await peopleBox.clear();
+  await transactionsBox.clear();
 }
 
 extension StringCasingExtension on String {

@@ -47,7 +47,7 @@ class PersonDetailPage extends StatelessWidget {
       body: Column(
         children: [
           Card(
-            margin: const EdgeInsets.all(18),
+            margin: const EdgeInsets.symmetric(horizontal: 10,vertical: 8),
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             color: isDark ? Colors.teal[900] : Colors.teal[100],
