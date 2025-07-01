@@ -42,4 +42,14 @@ class PersonProvider extends ChangeNotifier {
     await tx.delete();
     notifyListeners();
   }
+  //delete all person
+  Future<void> deleteAllPeopleAndTransactions() async {
+    final people = _peopleBox.values.toList();
+    for (var person in people) {
+      await person.delete();
+    }
+    await _peopleBox.clear();
+    await _txBox.clear();
+    notifyListeners();
+  }
 }

@@ -1,16 +1,18 @@
+import 'package:aspends_tracker/screens/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:aspends_tracker/providers/theme_provider.dart';
 import 'package:flutter/services.dart';
-import 'package:hive/hive.dart';
+//import 'package:hive/hive.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 
 import '../backup/export_csv.dart';
 import '../backup/import_csv.dart';
 import '../backup/person_backup_helper.dart';
-import '../models/person.dart';
-import '../models/person_transaction.dart';
+//import '../models/person.dart';
+//import '../models/person_transaction.dart';
 import '../models/theme.dart';
+import '../providers/person_provider.dart';
 import '../providers/transaction_provider.dart';
 import '../services/pdf_service.dart';
 
@@ -88,7 +90,7 @@ class _SettingsPageState extends State<SettingsPage> {
         Container(
           //padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            padding: const EdgeInsets.all(10),
             child: Card(
               elevation: 3,
               shape: RoundedRectangleBorder(
@@ -192,16 +194,15 @@ class _SettingsPageState extends State<SettingsPage> {
               HapticFeedback.lightImpact();
               await Provider.of<TransactionProvider>(context, listen: false)
                   .deleteAllData();
+              await Provider.of<PersonProvider>(context, listen: false)
+                  .deleteAllPeopleAndTransactions();
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("All data deleted")),
               );
               //wait some 3 second
-              Future.delayed(3 as Duration);
-              await deleteAllPeopleAndTransactions();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('All person data deleted')),
-              );
+             // Future.delayed(1 as Duration);
+              //await deleteAllPeopleAndTransactions();
 
             },
           ),
@@ -209,14 +210,28 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
+  void deleteAllPeopleAndTransactions() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('All person data deleted')),
+    );
+    await context.read<PersonProvider>().deleteAllPeopleAndTransactions();// If applicable
+    Navigator.pop(context);
+    HapticFeedback.lightImpact();
+    final personProvider = context.watch()<PersonProvider>();
+    final transactionProvider = context.watch()<TransactionProvider>();
+    personProvider.deleteAllPeopleAndTransactions();
+    transactionProvider.deleteAllData();
+  }
 }
-Future<void> deleteAllPeopleAndTransactions() async {
-  final peopleBox = Hive.box<Person>('people');
-  final transactionsBox = Hive.box<PersonTransaction>('personTransactions');
 
-  await peopleBox.clear();
-  await transactionsBox.clear();
-}
+
+// Future<void> deleteAllPeopleAndTransactions() async {
+//   final peopleBox = Hive.box<Person>('people');
+//   final transactionsBox = Hive.box<PersonTransaction>('personTransactions');
+//   await peopleBox.clear();
+//   await transactionsBox.clear();
+//
+// }
 
 extension StringCasingExtension on String {
   String capitalize() => "${this[0].toUpperCase()}${substring(1)}";

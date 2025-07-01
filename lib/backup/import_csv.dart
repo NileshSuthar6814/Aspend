@@ -30,31 +30,31 @@ class DataImporter {
           isIncome: item['isIncome'],
         );
         box.add(tx);
-        Fluttertoast.showToast(
-            msg: "No File Selected",
-            toastLength: Toast.LENGTH_SHORT,
-            gravity: ToastGravity.CENTER,
-            timeInSecForIosWeb: 1,
-            backgroundColor: Colors.red,
-            textColor: Colors.white,
-            fontSize: 16.0
-        );
+        // Fluttertoast.showToast(
+        //     msg: "No File Selected",
+        //     toastLength: Toast.LENGTH_SHORT,
+        //     gravity: ToastGravity.CENTER,
+        //     timeInSecForIosWeb: 1,
+        //     backgroundColor: Colors.red,
+        //     textColor: Colors.white,
+        //     fontSize: 16.0
+        // );
     HapticFeedback.heavyImpact();
       }
     }
     else if (result == null) {
       (
-      Fluttertoast.showToast(
-          msg: "No File Selected",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.CENTER,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0
-      ),
-      HapticFeedback.heavyImpact(),
-      );
-    }
+       Fluttertoast.showToast(
+           msg: "No File Selected",
+           toastLength: Toast.LENGTH_SHORT,
+           gravity: ToastGravity.CENTER,
+           timeInSecForIosWeb: 1,
+           backgroundColor: Colors.red,
+           textColor: Colors.white,
+           fontSize: 16.0
+       ),
+       HapticFeedback.heavyImpact(),
+       );
+     }
   }
 }

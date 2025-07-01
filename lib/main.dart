@@ -170,9 +170,9 @@ class _RootNavigationState extends State<RootNavigation> {
 
   final List<Widget> _screens = [
     HomePage(),
-    const PeopleTab(),
+    PeopleTab(),
     ChartPage(),
-    const SettingsPage(),
+    SettingsPage(),
   ];
 
   @override
@@ -209,7 +209,7 @@ class _RootNavigationState extends State<RootNavigation> {
         controller: _pageController,
         children: _screens,
         onPageChanged: _onPageChanged,
-        physics: const BouncingScrollPhysics(),
+        physics: const ClampingScrollPhysics(),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
@@ -240,3 +240,65 @@ class _RootNavigationState extends State<RootNavigation> {
     );
   }
 }
+// class RootNavigation extends StatefulWidget {
+//   const RootNavigation({super.key});
+//
+//   @override
+//   State<RootNavigation> createState() => _RootNavigationState();
+// }
+//
+// class _RootNavigationState extends State<RootNavigation> {
+//   int _selectedIndex = 0;
+//   late PageController _pageController;
+//
+//   final List<Widget> _screens = [
+//     HomePage(),
+//     ChartPage(),
+//     PeopleTab(),
+//     SettingsPage(),
+//   ];
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     _pageController = PageController(initialPage: _selectedIndex);
+//   }
+//
+//   @override
+//   void dispose() {
+//     _pageController.dispose();
+//     super.dispose();
+//   }
+//
+//   void _onPageChanged(int index) {
+//     setState(() {
+//       _selectedIndex = index;
+//     });
+//   }
+//
+//   void _onItemTapped(int index) {
+//     _pageController.jumpToPage(index);
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       body: **PageView(
+//       controller: _pageController,
+//       onPageChanged: _onPageChanged,
+//       children: _screens,
+//       physics: const NeverScrollableScrollPhysics(), // Optional
+//     )**,
+//     bottomNavigationBar: NavigationBar(
+//     selectedIndex: _selectedIndex,
+//     onDestinationSelected: _onItemTapped,
+//     destinations: const [
+//     NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+//     NavigationDestination(icon: Icon(Icons.pie_chart), label: 'Charts'),
+//     NavigationDestination(icon: Icon(Icons.groups), label: 'People'),
+//     NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+//     ],
+//     ),
+//     );
+//   }
+// }

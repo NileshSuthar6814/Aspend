@@ -79,7 +79,7 @@ class PersonDetailPage extends StatelessWidget {
                 final sign = tx.amount >= 0 ? '+' : '';
                 return Card(
                   color: isDark ? Colors.teal[900] : Colors.teal[100],
-                  margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
                   elevation: 1,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   child: GestureDetector(
@@ -88,13 +88,14 @@ class PersonDetailPage extends StatelessWidget {
                       provider.deleteTransaction(tx);
                     },
                     child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                      title: Text(tx.note),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+                      title: tx.note.isEmpty? const Text('No note') : Text(tx.note),
                       subtitle: Text(DateFormat.yMMMd().add_jm().format(tx.date)),
                       trailing: Text(
                         '$sign₹${tx.amount.toStringAsFixed(2)}',
                         style: TextStyle(
                           color: tx.amount >= 0 ? Colors.green : Colors.red,
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

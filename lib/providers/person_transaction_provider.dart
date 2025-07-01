@@ -34,4 +34,12 @@ class PersonTransactionProvider extends ChangeNotifier {
         ?.fold(0.0, (sum, tx) => sum! + tx.amount) ??
         0.0;
   }
+  Future<void> deleteAllData() async {
+    final people = _box.values.toList();
+    for (var person in people) {
+      await person.delete();
+    }
+    await _box.clear();
+    notifyListeners();
+  }
 }
