@@ -1,8 +1,3 @@
-Great! Here's a **polished and professional version** of your `README.md` for **Aspend**, your Flutter project using Material Theme and dynamic colors:
-
----
-
-````markdown
 # 🎨 Aspend
 
 **Aspend** is a modern Flutter application that embraces **Material You** design principles with **dynamic color theming** for an immersive and personalized user experience.
