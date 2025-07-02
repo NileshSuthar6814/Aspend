@@ -200,9 +200,6 @@ class _SettingsPageState extends State<SettingsPage> {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("All data deleted")),
               );
-              //wait some 3 second
-             // Future.delayed(1 as Duration);
-              //await deleteAllPeopleAndTransactions();
 
             },
           ),
