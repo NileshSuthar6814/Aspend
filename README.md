@@ -28,7 +28,7 @@ Make sure you have the following installed:
 ### 2. 🛠 Installation
 
 ```bash
-git clone https://github.com/yourusername/aspend.git
+git clone https://github.com/sthrnilshaaa/aspend.git
 cd aspend
 flutter pub get
 flutter run
@@ -76,8 +76,8 @@ This project is licensed under the MIT License – see the [LICENSE](LICENSE) fi
 
 ## 👤 Author
 
-Created by **\[Your Name]**
-[GitHub](https://github.com/yourusername) • [Portfolio](https://yourwebsite.com)
+Created by **\nilshaaa**
+[GitHub](https://github.com/sthrnilshaaa) 
 
 ```
 
