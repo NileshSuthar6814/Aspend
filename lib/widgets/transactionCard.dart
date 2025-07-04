@@ -115,7 +115,7 @@ class TransactionCard extends StatelessWidget {
                 const SnackBar(content: Text("Transaction deleted")),
               );
             },
-            child: Text("Delete", style: TextStyle(color: Colors.redAccent)),
+            child: Text("Delete", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

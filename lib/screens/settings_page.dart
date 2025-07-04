@@ -148,7 +148,7 @@ class _SettingsPageState extends State<SettingsPage> {
         const SizedBox(height: 10),
         const ListTile(
           title: Text("Version"),
-          subtitle: Text("4.0.5"),
+          subtitle: Text("4.1.0"),
         ),
         ListTile(
             leading: const Icon(Icons.delete_forever, color: Colors.red),
@@ -189,7 +189,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ElevatedButton.icon(
             icon: const Icon(Icons.delete),
             label: const Text("Delete All"),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
             onPressed: () async {
               HapticFeedback.lightImpact();
               await Provider.of<TransactionProvider>(context, listen: false)
