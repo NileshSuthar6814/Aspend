@@ -190,6 +190,7 @@ class _RootNavigationState extends State<RootNavigation> {
   void _onPageChanged(int index) {
     setState(() {
       _selectedIndex = index;
+      HapticFeedback.lightImpact();
     });
   }
 
