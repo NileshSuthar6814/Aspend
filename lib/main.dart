@@ -190,8 +190,8 @@ class _RootNavigationState extends State<RootNavigation> {
   void _onPageChanged(int index) {
     setState(() {
       _selectedIndex = index;
-      HapticFeedback.lightImpact();
     });
+    HapticFeedback.selectionClick();
   }
 
   void _onItemTapped(int index) {
@@ -210,7 +210,7 @@ class _RootNavigationState extends State<RootNavigation> {
         controller: _pageController,
         children: _screens,
         onPageChanged: _onPageChanged,
-        physics: const ClampingScrollPhysics(),
+        physics:  CarouselScrollPhysics(),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
