@@ -20,6 +20,9 @@ jobs:
           flutter-version: '3.32.4'  # ⚠️ Set your Flutter version here
 
       - name: Install dependencies
+        run: flutter pub upgrade
+        
+      - name: Install dependencies
         run: flutter pub get
 
       - name: Build release APK
