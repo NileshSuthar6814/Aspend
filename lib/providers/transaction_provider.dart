@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:home_widget/home_widget.dart';
 import '../models/transaction.dart';
 
 class TransactionProvider with ChangeNotifier {
@@ -35,6 +36,10 @@ class TransactionProvider with ChangeNotifier {
 
     // Update balance and persist
     addOrMinusBalance(tx.amount, tx.isIncome);
+    
+    // Update home widget
+    _updateHomeWidget();
+    
     notifyListeners();
   }
 
@@ -47,6 +52,9 @@ class TransactionProvider with ChangeNotifier {
     await txBox.delete(transaction.key);
     _transactions.removeWhere((tx) => tx.key == transaction.key);
 
+    // Update home widget
+    _updateHomeWidget();
+    
     notifyListeners();
   }
 
@@ -77,6 +85,22 @@ class TransactionProvider with ChangeNotifier {
     await balanceBox.put('currentBalance', 0.0);
     _currentBalance = 0.0;
 
+    // Update home widget
+    _updateHomeWidget();
+    
     notifyListeners();
+  }
+
+  void _updateHomeWidget() async {
+    try {
+      await HomeWidget.saveWidgetData('balance', _currentBalance.toString());
+      await HomeWidget.saveWidgetData('transaction_count', _transactions.length.toString());
+      await HomeWidget.updateWidget(
+        androidName: 'HomeWidgetProvider',
+        iOSName: 'HomeWidget',
+      );
+    } catch (e) {
+      print('Error updating home widget: $e');
+    }
   }
 }

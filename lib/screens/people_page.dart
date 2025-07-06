@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:zoom_tap_animation/zoom_tap_animation.dart';
+import 'dart:ui';
 import '../providers/person_provider.dart';
 import '../person/person_details_page.dart';
 import '../providers/theme_provider.dart';
@@ -13,14 +16,40 @@ class PeopleTab extends StatefulWidget {
   State<PeopleTab> createState() => _PeopleTabState();
 }
 
-class _PeopleTabState extends State<PeopleTab> {
+class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
   late ScrollController _scrollController;
   bool _showFab = true;
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
+
+    _fadeController.forward();
+    _slideController.forward();
 
     _scrollController.addListener(() {
       final direction = _scrollController.position.userScrollDirection;
@@ -35,23 +64,62 @@ class _PeopleTabState extends State<PeopleTab> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _fadeController.dispose();
+    _slideController.dispose();
     super.dispose();
   }
 
   void _showAddPersonDialog(BuildContext context) {
     final controller = TextEditingController();
+    final theme = Theme.of(context);
+    
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Add Person'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(labelText: 'Name'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Add New Person',
+          style: GoogleFonts.nunito(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Enter the name of the person you want to track transactions with',
+              style: GoogleFonts.nunito(
+                fontSize: 14,
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                labelText: 'Person Name',
+                labelStyle: GoogleFonts.nunito(fontSize: 16),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: theme.colorScheme.surface,
+                prefixIcon: Icon(Icons.person_outline, color: theme.colorScheme.primary),
+              ),
+              style: GoogleFonts.nunito(fontSize: 16),
+              autofocus: true,
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -62,7 +130,16 @@ class _PeopleTabState extends State<PeopleTab> {
                 HapticFeedback.lightImpact();
               }
             },
-            child: const Text('Add'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: Text(
+              'Add Person',
+              style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),
@@ -73,82 +150,264 @@ class _PeopleTabState extends State<PeopleTab> {
   Widget build(BuildContext context) {
     final personProvider = context.watch<PersonProvider>();
     final people = personProvider.people;
+    final theme = Theme.of(context);
     final isDark = context.watch<AppThemeProvider>().isDarkMode;
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('People'),
-        backgroundColor: isDark ? Colors.teal[900] : Colors.teal[100],
-      ),
-      body: people.isEmpty
-          ? const Center(
-        child: Text(
-          "No people added yet",
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          'People',
+          style: GoogleFonts.nunito(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
         ),
-      )
-          : ListView.builder(
-        controller: _scrollController,
-        itemCount: people.length,
-        itemBuilder: (_, idx) {
-          final person = people[idx];
-          final total = personProvider.totalFor(person.name);
-          final isPositive = total >= 0;
-
-          return Card(
-            color: isDark ? Colors.teal[900] : Colors.teal[50],
-            margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        flexibleSpace: ClipRRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark 
+                    ? [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)]
+                    : [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
+                ),
+              ),
             ),
-            elevation: 4,
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              title: Text(
-                person.name,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              subtitle: const Text("Tap to view transactions"),
-              trailing: Text(
-                '₹${total.toStringAsFixed(2)}',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: isPositive ? Colors.green : Colors.red,
-                ),
-              ),
-              onTap: () {
-                HapticFeedback.lightImpact();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PersonDetailPage(person: person),
+          ),
+        ),
+      ),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: people.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(60),
+                        ),
+                        child: Icon(
+                          Icons.people_outline,
+                          size: 60,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        "No people added yet",
+                        style: GoogleFonts.nunito(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Add people to track transactions with them",
+                        style: GoogleFonts.nunito(
+                          fontSize: 16,
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
-          );
-        },
+                )
+              : ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: people.length,
+                  itemBuilder: (_, idx) {
+                    final person = people[idx];
+                    final total = personProvider.totalFor(person.name);
+                    final isPositive = total >= 0;
+
+                    return AnimatedBuilder(
+                      animation: _fadeController,
+                      builder: (context, child) {
+                        return Transform.translate(
+                          offset: Offset(0, 20 * (1 - _fadeController.value)),
+                          child: Opacity(
+                            opacity: _fadeController.value,
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              child: ZoomTapAnimation(
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => PersonDetailPage(person: person),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        theme.colorScheme.surface,
+                                        theme.colorScheme.surface.withOpacity(0.8),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: theme.colorScheme.outline.withOpacity(0.2),
+                                      width: 1,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: theme.colorScheme.shadow.withOpacity(0.1),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 60,
+                                          height: 60,
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                theme.colorScheme.primary,
+                                                theme.colorScheme.primary.withOpacity(0.8),
+                                              ],
+                                            ),
+                                            borderRadius: BorderRadius.circular(30),
+                                          ),
+                                          child: Icon(
+                                            Icons.person,
+                                            color: Colors.white,
+                                            size: 30,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                person.name,
+                                                style: GoogleFonts.nunito(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: theme.colorScheme.onSurface,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                "Tap to view transactions",
+                                                style: GoogleFonts.nunito(
+                                                  fontSize: 14,
+                                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              '₹${total.toStringAsFixed(2)}',
+                                              style: GoogleFonts.nunito(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: isPositive ? Colors.green : Colors.red,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: isPositive 
+                                                    ? Colors.green.withOpacity(0.1)
+                                                    : Colors.red.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                isPositive ? 'Credit' : 'Debit',
+                                                style: GoogleFonts.nunito(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: isPositive ? Colors.green : Colors.red,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+        ),
       ),
       floatingActionButton: _showFab
-          ?Column(
-            mainAxisAlignment:MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            onPressed: () {
-              _showAddPersonDialog(context);
-              HapticFeedback.lightImpact();
-            },
-            child: const Icon(Icons.person_add),
-          ),
-          SizedBox(
-            height: 50,
-          )
-        ],
-      )
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(
+                            color: theme.colorScheme.outline.withOpacity(0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: FloatingActionButton.extended(
+                          onPressed: () {
+                            _showAddPersonDialog(context);
+                            HapticFeedback.lightImpact();
+                          },
+                          backgroundColor: Colors.transparent,
+                          elevation: 0,
+                          icon: const Icon(Icons.person_add, size: 24),
+                          label: Text(
+                            'Add Person',
+                            style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 50),
+              ],
+            )
           : null,
     );
   }
