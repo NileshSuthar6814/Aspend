@@ -477,7 +477,6 @@ class _RootNavigationState extends State<RootNavigation> {
 class MyCustomClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
-    // TODO: implement getClip
     Path path = Path();
     path.moveTo(0, 0);
     path.lineTo(size.width, 0);
@@ -490,7 +489,6 @@ class MyCustomClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) {
-    // TODO: implement shouldReclip
     return true;
   }
 }
