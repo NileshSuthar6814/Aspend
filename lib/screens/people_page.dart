@@ -21,8 +21,10 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
   bool _showFab = true;
   late AnimationController _fadeController;
   late AnimationController _slideController;
+  late AnimationController _fabVisibilityController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  late Animation<double> _fabOpacity;
 
   @override
   void initState() {
@@ -48,6 +50,15 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
 
+    // FAB visibility animation
+    _fabVisibilityController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fabOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _fabVisibilityController, curve: Curves.easeInOut),
+    );
+
     _fadeController.forward();
     _slideController.forward();
 
@@ -55,8 +66,10 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
       final direction = _scrollController.position.userScrollDirection;
       if (direction == ScrollDirection.reverse && _showFab) {
         setState(() => _showFab = false);
+        _fabVisibilityController.forward();
       } else if (direction == ScrollDirection.forward && !_showFab) {
         setState(() => _showFab = true);
+        _fabVisibilityController.reverse();
       }
     });
   }
@@ -66,6 +79,7 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
     _scrollController.dispose();
     _fadeController.dispose();
     _slideController.dispose();
+    _fabVisibilityController.dispose();
     super.dispose();
   }
 
@@ -230,8 +244,13 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
               : ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.all(16),
-                  itemCount: people.length,
+                  itemCount: people.length + 1, // +1 for bottom padding
                   itemBuilder: (_, idx) {
+                    // Add bottom padding as last item
+                    if (idx == people.length) {
+                      return const SizedBox(height: 120);
+                    }
+                    
                     final person = people[idx];
                     final total = personProvider.totalFor(person.name);
                     final isPositive = total >= 0;
@@ -369,46 +388,55 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
                 ),
         ),
       ),
-      floatingActionButton: _showFab
-          ? Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(
-                            color: theme.colorScheme.outline.withOpacity(0.2),
-                            width: 1,
+      floatingActionButton: AnimatedBuilder(
+        animation: _fabVisibilityController,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, 20 * (1 - _fabVisibilityController.value)),
+            child: Opacity(
+              opacity: _fabVisibilityController.value,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: theme.colorScheme.outline.withOpacity(0.2),
+                              width: 1,
+                            ),
                           ),
-                        ),
-                        child: FloatingActionButton.extended(
-                          onPressed: () {
-                            _showAddPersonDialog(context);
-                            HapticFeedback.lightImpact();
-                          },
-                          backgroundColor: Colors.transparent,
-                          elevation: 0,
-                          icon: const Icon(Icons.person_add, size: 24),
-                          label: Text(
-                            'Add Person',
-                            style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
+                          child: FloatingActionButton.extended(
+                            onPressed: () {
+                              _showAddPersonDialog(context);
+                              HapticFeedback.lightImpact();
+                            },
+                            backgroundColor: Colors.transparent,
+                            elevation: 0,
+                            icon: const Icon(Icons.person_add, size: 24),
+                            label: Text(
+                              'Add Person',
+                              style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 50),
-              ],
-            )
-          : null,
+                  const SizedBox(height: 50),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

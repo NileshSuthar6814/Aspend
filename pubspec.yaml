@@ -58,7 +58,7 @@ flutter_launcher_icons:
     generate: true
   ios: false
   adaptive_icon_background: "#FFFFFF"
-  image_path: "assets/icons/holding-hand-revenue.png"
+  image_path: "assets/icons/icons8-morty-smith-150.png"
 
 
 file_picker:

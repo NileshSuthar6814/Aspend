@@ -463,9 +463,9 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
           });
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1.5), // Reduced vertical padding
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(12), // Smaller radius for half height
             color: isSelected ? Colors.teal.withOpacity(0.18) : Colors.transparent,
             border: isSelected ? Border.all(
               color: Colors.teal.withOpacity(0.5),
@@ -481,7 +481,7 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
                   icon,
                   key: ValueKey(isSelected),
                   color: isSelected ? Colors.teal.shade700 : Colors.grey.shade600,
-                  size: isSelected ? 22 : 20,
+                  size: isSelected ? 20 : 18, // Slightly smaller icons
                 ),
               ),
               if (isSelected) ...[
@@ -490,7 +490,7 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
                   duration: const Duration(milliseconds: 200),
                   style: TextStyle(
                     color: Colors.teal.shade700,
-                    fontSize: 11,
+                    fontSize: 10, // Smaller font
                     fontWeight: FontWeight.w600,
                   ),
                   child: Text(label),

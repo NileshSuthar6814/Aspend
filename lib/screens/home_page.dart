@@ -25,6 +25,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   double _currentBalance = 0;
   late AnimationController _fabController;
   late Animation<double> _fabScale;
+  late AnimationController _fabVisibilityController;
+  late Animation<double> _fabOpacity;
   late ScrollController _scrollController;
   bool _showFab = true;
 
@@ -38,15 +40,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _fabScale = Tween<double>(begin: 1.0, end: 0.9).animate(
       CurvedAnimation(parent: _fabController, curve: Curves.easeInOut),
     );
+    
+    // New FAB visibility animation controller
+    _fabVisibilityController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fabOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _fabVisibilityController, curve: Curves.easeInOut),
+    );
+    
     _scrollController = ScrollController();
     
-    // Add scroll listener for FAB visibility
+    // Improved scroll listener for FAB visibility
     _scrollController.addListener(() {
       final direction = _scrollController.position.userScrollDirection;
       if (direction == ScrollDirection.reverse && _showFab) {
         setState(() => _showFab = false);
+        _fabVisibilityController.forward();
       } else if (direction == ScrollDirection.forward && !_showFab) {
         setState(() => _showFab = true);
+        _fabVisibilityController.reverse();
       }
     });
     
@@ -56,6 +70,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void dispose() {
     _fabController.dispose();
+    _fabVisibilityController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -151,111 +166,124 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               },
             ),
           ),
+          // Bottom padding to prevent UI glitches
+          SliverToBoxAdapter(
+            child: SizedBox(height: 120),
+          ),
         ],
       ),
-      floatingActionButton: _showFab
-          ? Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                // Glass Effect Container for FABs
-                Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surface.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(
-                            color: theme.colorScheme.outline.withOpacity(0.2),
-                            width: 1,
+      floatingActionButton: AnimatedBuilder(
+        animation: _fabVisibilityController,
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, 20 * (1 - _fabVisibilityController.value)),
+            child: Opacity(
+              opacity: _fabVisibilityController.value,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  // Glass Effect Container for FABs
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: theme.colorScheme.outline.withOpacity(0.2),
+                              width: 1,
+                            ),
                           ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Income FAB
-                              ScaleTransition(
-                                scale: _fabScale,
-                                child: ZoomTapAnimation(
-                                  onTap: () {
-                                    _fabController.forward().then((_) => _fabController.reverse());
-                                    _showAddTransactionDialog(context, isIncome: true);
-                                    HapticFeedback.lightImpact();
-                                  },
-                                  child: Container(
-                                    width: 56,
-                                    height: 56,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [Colors.green, Colors.green.shade600],
-                                      ),
-                                      borderRadius: BorderRadius.circular(28),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.green.withOpacity(0.3),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 4),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Income FAB
+                                ScaleTransition(
+                                  scale: _fabScale,
+                                  child: ZoomTapAnimation(
+                                    onTap: () {
+                                      _fabController.forward().then((_) => _fabController.reverse());
+                                      _showAddTransactionDialog(context, isIncome: true);
+                                      HapticFeedback.lightImpact();
+                                    },
+                                    child: Container(
+                                      width: 56,
+                                      height: 56,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [Colors.green, Colors.green.shade600],
                                         ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.add,
-                                      color: Colors.white,
-                                      size: 28,
+                                        borderRadius: BorderRadius.circular(28),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.green.withOpacity(0.3),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.add,
+                                        color: Colors.white,
+                                        size: 28,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              // Expense FAB
-                              ScaleTransition(
-                                scale: _fabScale,
-                                child: ZoomTapAnimation(
-                                  onTap: () {
-                                    _fabController.forward().then((_) => _fabController.reverse());
-                                    _showAddTransactionDialog(context, isIncome: false);
-                                    HapticFeedback.lightImpact();
-                                  },
-                                  child: Container(
-                                    width: 56,
-                                    height: 56,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [Colors.red, Colors.red.shade600],
-                                      ),
-                                      borderRadius: BorderRadius.circular(28),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.red.withOpacity(0.3),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 4),
+                                const SizedBox(width: 12),
+                                // Expense FAB
+                                ScaleTransition(
+                                  scale: _fabScale,
+                                  child: ZoomTapAnimation(
+                                    onTap: () {
+                                      _fabController.forward().then((_) => _fabController.reverse());
+                                      _showAddTransactionDialog(context, isIncome: false);
+                                      HapticFeedback.lightImpact();
+                                    },
+                                    child: Container(
+                                      width: 56,
+                                      height: 56,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [Colors.red, Colors.red.shade600],
                                         ),
-                                      ],
-                                    ),
-                                    child: const Icon(
-                                      Icons.remove,
-                                      color: Colors.white,
-                                      size: 28,
+                                        borderRadius: BorderRadius.circular(28),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.red.withOpacity(0.3),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Icon(
+                                        Icons.remove,
+                                        color: Colors.white,
+                                        size: 28,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 50),
-              ],
-            )
-          : null,
+                  const SizedBox(height: 50),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 

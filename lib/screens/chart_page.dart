@@ -134,7 +134,7 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                         
                         // Transaction Lists
                         _buildTransactionLists(spends, incomes, isDark),
-                        const SizedBox(height: 100),
+                        const SizedBox(height: 120), // Increased bottom spacing
                       ],
                     ),
                   )
@@ -233,23 +233,23 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12), // Smaller radius for half height
       ),
       child: TabBar(
         controller: _tabController,
         indicator: BoxDecoration(
           color: Colors.teal,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(12), // Smaller radius for half height
         ),
-        indicatorPadding: const EdgeInsets.symmetric(vertical: 3, horizontal: 4),
+        indicatorPadding: const EdgeInsets.symmetric(vertical: 1.5, horizontal: 4), // Reduced vertical padding
         labelColor: Colors.white,
         unselectedLabelColor: isDark ? Colors.white70 : Colors.black87,
         labelStyle: GoogleFonts.nunito(
-          fontSize: 12,
+          fontSize: 11, // Smaller font
           fontWeight: FontWeight.w600,
         ),
         unselectedLabelStyle: GoogleFonts.nunito(
-          fontSize: 12,
+          fontSize: 11, // Smaller font
           fontWeight: FontWeight.w500,
         ),
         tabs: const [

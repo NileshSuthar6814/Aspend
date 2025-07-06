@@ -284,10 +284,15 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                           ],
                         ),
                       )
-                    : ListView.builder(
+                                            : ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: txs.length,
+                        itemCount: txs.length + 1, // +1 for bottom padding
                         itemBuilder: (c, i) {
+                          // Add bottom padding as last item
+                          if (i == txs.length) {
+                            return const SizedBox(height: 120);
+                          }
+                          
                           final tx = txs[i];
                           final sign = tx.amount >= 0 ? '+' : '';
                           final isPositiveTx = tx.amount >= 0;
