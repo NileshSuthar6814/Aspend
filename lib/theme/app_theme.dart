@@ -4,6 +4,7 @@ class AppTheme {
   static final ThemeData lightTheme = ThemeData(
     colorScheme: ColorScheme.fromSeed(seedColor: Colors.greenAccent),
     scaffoldBackgroundColor: Colors.grey[100],
+
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.white,
       foregroundColor: Colors.black,

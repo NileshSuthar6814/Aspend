@@ -77,7 +77,10 @@ class _HomePageState extends State<HomePage> {
             HapticFeedback.lightImpact();
           },
           heroTag: null,
-        )
+        ),
+            SizedBox(
+              height: 50,
+            )
       ]),
     );
   }

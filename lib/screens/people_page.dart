@@ -134,12 +134,20 @@ class _PeopleTabState extends State<PeopleTab> {
         },
       ),
       floatingActionButton: _showFab
-          ? FloatingActionButton(
-        onPressed: () {
-          _showAddPersonDialog(context);
-          HapticFeedback.lightImpact();
-        },
-        child: const Icon(Icons.person_add),
+          ?Column(
+            mainAxisAlignment:MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: () {
+              _showAddPersonDialog(context);
+              HapticFeedback.lightImpact();
+            },
+            child: const Icon(Icons.person_add),
+          ),
+          SizedBox(
+            height: 50,
+          )
+        ],
       )
           : null,
     );
