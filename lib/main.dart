@@ -4,7 +4,7 @@ import 'package:aspends_tracker/screens/people_page.dart';
 import 'package:aspends_tracker/providers/person_provider.dart';
 import 'package:aspends_tracker/providers/person_transaction_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:flex_color_scheme/flex_color_scheme.dart';
+//import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -12,7 +12,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_color/dynamic_color.dart'; // Add this import
-import 'package:stylish_bottom_bar/stylish_bottom_bar.dart';
+//import 'package:stylish_bottom_bar/stylish_bottom_bar.dart';
 import 'models/person.dart';
 import 'models/person_transaction.dart';
 import 'models/theme.dart';
@@ -215,7 +215,7 @@ class _RootNavigationState extends State<RootNavigation> {
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
-    final isDark = context.watch<AppThemeProvider>().isDarkMode;
+    //final isDark = context.watch<AppThemeProvider>().isDarkMode;
     return Scaffold(
       body:Stack(
         fit: StackFit.loose,
@@ -480,8 +480,8 @@ class MyCustomClipper extends CustomClipper<Path> {
     Path path = Path();
     path.moveTo(0, 0);
     path.lineTo(size.width, 0);
-    path.lineTo(64, size.width);
-    //path.lineTo(64, size.height);
+    path.lineTo(0, size.height);
+    path.lineTo(0, size.width);
     path.lineTo(0, 0);
     path.close();
     return path;
