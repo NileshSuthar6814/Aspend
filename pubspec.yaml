@@ -13,7 +13,6 @@ dependencies:
   pdf: ^3.10.4
   printing: ^5.11.1
   hive_flutter: ^1.1.0
-  material_color_utilities: ^0.8.0
   dynamic_color:
   zoom_tap_animation:
   flex_color_scheme:
