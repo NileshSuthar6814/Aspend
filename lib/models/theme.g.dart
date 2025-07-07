@@ -5,6 +5,7 @@ part of 'theme.dart';
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
+
 class AppThemeAdapter extends TypeAdapter<AppTheme> {
   @override
   final int typeId = 2;
@@ -19,7 +20,7 @@ class AppThemeAdapter extends TypeAdapter<AppTheme> {
       case 2:
         return AppTheme.system;
       default:
-        return AppTheme.system;
+        return AppTheme.light;
     }
   }
 
@@ -37,4 +38,14 @@ class AppThemeAdapter extends TypeAdapter<AppTheme> {
         break;
     }
   }
+
+  @override
+  int get hashCode => typeId.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AppThemeAdapter &&
+          runtimeType == other.runtimeType &&
+          typeId == other.typeId;
 }

@@ -33,6 +33,7 @@ dependencies:
   intl: ^0.20.2
   flutter_displaymode: ^0.6.0
   liquid_glass_renderer: ^0.1.1-dev.9
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

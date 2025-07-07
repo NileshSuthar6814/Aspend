@@ -5,14 +5,19 @@ part 'person.g.dart';
 class Person extends HiveObject {
   @HiveField(0)
   String name;
+  
+  @HiveField(1)
+  String? photoPath;
 
-  Person({required this.name});
+  Person({required this.name, this.photoPath});
 
   Map<String, dynamic> toJson() => {
     'name': name,
+    'photoPath': photoPath,
   };
 
   factory Person.fromJson(Map<String, dynamic> json) => Person(
     name: json['name'],
+    photoPath: json['photoPath'],
   );
 }

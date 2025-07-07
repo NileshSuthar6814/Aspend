@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:ui';
 import '../models/transaction.dart';
 import '../providers/theme_provider.dart';
 import '../providers/transaction_provider.dart';
@@ -80,7 +81,7 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
             floating: true,
             pinned: true,
             elevation: 0,
-            backgroundColor: theme.colorScheme.surface,
+            backgroundColor: Colors.transparent,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 "Analytics",
@@ -89,14 +90,19 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                   color: theme.colorScheme.onSurface,
                 ),
               ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDark 
-                      ? [Colors.teal.shade900, Colors.teal.shade700]
-                      : [Colors.teal.shade100, Colors.teal.shade200],
+              background: ClipRRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: isDark 
+                          ? [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)]
+                          : [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -107,16 +113,16 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
           SliverToBoxAdapter(
             child: hasData
                 ? Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     child: Column(
                       children: [
                         // Summary Cards
                         _buildSummaryCards(totalIncome, totalSpend, isDark),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
                         
                         // Chart Tabs
                         _buildChartTabs(isDark),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
                         
                         // Chart Content
                         SizedBox(
@@ -130,16 +136,15 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 24),
-                        
-                        // Transaction Lists
-                        _buildTransactionLists(spends, incomes, isDark),
-                        const SizedBox(height: 120), // Increased bottom spacing
+                        const SizedBox(height: 20),
                       ],
                     ),
                   )
                 : _buildEmptyState(isDark),
           ),
+          if (hasData) ..._buildTransactionLists(spends, incomes, isDark),
+          if (hasData)
+            SliverToBoxAdapter(child: SizedBox(height: 80)), // Reduced bottom spacing
         ],
       ),
     );
@@ -232,25 +237,49 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12), // Smaller radius for half height
+        color: isDark ? Colors.grey.shade900.withOpacity(0.3) : Colors.grey.shade100.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? Colors.grey.shade700.withOpacity(0.3) : Colors.grey.shade300.withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: TabBar(
         controller: _tabController,
         indicator: BoxDecoration(
-          color: Colors.teal,
-          borderRadius: BorderRadius.circular(12), // Smaller radius for half height
+          gradient: LinearGradient(
+            colors: [Colors.teal.shade400, Colors.teal.shade600],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.teal.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        indicatorPadding: const EdgeInsets.symmetric(vertical: 1.5, horizontal: 4), // Reduced vertical padding
+        indicatorPadding: const EdgeInsets.symmetric(vertical: 3, horizontal: 8),
         labelColor: Colors.white,
         unselectedLabelColor: isDark ? Colors.white70 : Colors.black87,
         labelStyle: GoogleFonts.nunito(
-          fontSize: 11, // Smaller font
+          fontSize: 12,
           fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
         ),
         unselectedLabelStyle: GoogleFonts.nunito(
-          fontSize: 11, // Smaller font
+          fontSize: 12,
           fontWeight: FontWeight.w500,
+          letterSpacing: 0.3,
         ),
         tabs: const [
           Tab(text: "Overview"),
@@ -492,11 +521,10 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildTransactionLists(List<Transaction> spends, List<Transaction> incomes, bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
+  List<Widget> _buildTransactionLists(List<Transaction> spends, List<Transaction> incomes, bool isDark) {
+    return [
+      SliverToBoxAdapter(
+        child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
             "Recent Transactions",
@@ -507,10 +535,9 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
             ),
           ),
         ),
-        // Single column layout for better readability
-        _buildTransactionsList(spends, incomes),
-      ],
-    );
+      ),
+      _buildTransactionsList(spends, incomes),
+    ];
   }
 
   Widget _buildTransactionsList(List<Transaction> spends, List<Transaction> incomes) {
@@ -520,67 +547,67 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
     
     final grouped = _groupTransactionsByDate(allTransactions);
     
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: grouped.length,
-      itemBuilder: (context, index) {
-        String dateKey = grouped.keys.elementAt(index);
-        List<Transaction> dayTxs = grouped[dateKey]!;
-        
-        // Separate income and expenses for this day
-        List<Transaction> dayIncomes = dayTxs.where((t) => t.isIncome).toList();
-        List<Transaction> dayExpenses = dayTxs.where((t) => !t.isIncome).toList();
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          String dateKey = grouped.keys.elementAt(index);
+          List<Transaction> dayTxs = grouped[dateKey]!;
+          
+          // Separate income and expenses for this day
+          List<Transaction> dayIncomes = dayTxs.where((t) => t.isIncome).toList();
+          List<Transaction> dayExpenses = dayTxs.where((t) => !t.isIncome).toList();
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Date Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.teal.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.teal.withOpacity(0.3),
-                    width: 1,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Date Header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.teal.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.teal.withOpacity(0.3),
+                      width: 1,
+                    ),
                   ),
-                ),
-                child: Text(
-                  dateKey,
-                  style: GoogleFonts.nunito(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal.shade700,
+                  child: Text(
+                    dateKey,
+                    style: GoogleFonts.nunito(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal.shade700,
+                    ),
                   ),
                 ),
               ),
-            ),
-            
-            // Income transactions
-            if (dayIncomes.isNotEmpty) ...[
-              _buildSectionHeader("Income", Colors.green, Icons.trending_up),
-              ...dayIncomes.map((tx) => TransactionTile(
-                transaction: tx,
-                index: index,
-              )).toList(),
+              
+              // Income transactions
+              if (dayIncomes.isNotEmpty) ...[
+                _buildSectionHeader("Income", Colors.green, Icons.trending_up),
+                ...dayIncomes.map((tx) => TransactionTile(
+                  transaction: tx,
+                  index: index,
+                )).toList(),
+              ],
+              
+              // Expense transactions
+              if (dayExpenses.isNotEmpty) ...[
+                _buildSectionHeader("Expenses", Colors.red, Icons.trending_down),
+                ...dayExpenses.map((tx) => TransactionTile(
+                  transaction: tx,
+                  index: index,
+                )).toList(),
+              ],
+              
+              const SizedBox(height: 12),
             ],
-            
-            // Expense transactions
-            if (dayExpenses.isNotEmpty) ...[
-              _buildSectionHeader("Expenses", Colors.red, Icons.trending_down),
-              ...dayExpenses.map((tx) => TransactionTile(
-                transaction: tx,
-                index: index,
-              )).toList(),
-            ],
-            
-            const SizedBox(height: 12),
-          ],
-        );
-      },
+          );
+        },
+        childCount: grouped.length,
+      ),
     );
   }
 
@@ -637,3 +664,4 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
     );
   }
 }
+

@@ -52,15 +52,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     
     _scrollController = ScrollController();
     
-    // Improved scroll listener for FAB visibility
+    // Fixed scroll listener for FAB visibility (scroll down to show, scroll up to hide)
     _scrollController.addListener(() {
       final direction = _scrollController.position.userScrollDirection;
-      if (direction == ScrollDirection.reverse && _showFab) {
+      if (direction == ScrollDirection.forward && _showFab) {
         setState(() => _showFab = false);
         _fabVisibilityController.forward();
-      } else if (direction == ScrollDirection.forward && !_showFab) {
+      } else if (direction == ScrollDirection.reverse && !_showFab) {
         setState(() => _showFab = true);
         _fabVisibilityController.reverse();
+      }
+      else if(direction == ScrollDirection.idle && !_showFab){
+        setState(() {
+          _showFab=true;
+        });
+        //_fabVisibilityController.reverse();
       }
     });
     
@@ -92,8 +98,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.watch<AppThemeProvider>().isDarkMode;
+    final isDark = Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
     final theme = Theme.of(context);
+    final txns = context.watch<TransactionProvider>().transactions;
+    final spends = txns.where((t) => !t.isIncome).toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+    final incomes = txns.where((t) => t.isIncome).toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+    final balance = context.watch<TransactionProvider>().totalBalance;
+    final grouped = _groupTransactionsByDate([...spends, ...incomes]);
+    final hasTransactions = txns.isNotEmpty;
     
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -102,27 +116,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         slivers: [
           // Enhanced App Bar with Glass Effect
           SliverAppBar(
-            expandedHeight: 120,
+            expandedHeight: 100,
             floating: true,
             pinned: true,
-            elevation: 0,
+            elevation: 1,
             backgroundColor: Colors.transparent,
-            flexibleSpace: ClipRRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: FlexibleSpaceBar(
-                  title: Text(
-                    "Aspends Tracker",
-                    style: GoogleFonts.nunito(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                  ),
-                  background: Container(
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(
+                "Aspends Tracker",
+                style: GoogleFonts.nunito(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              background: ClipRRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                         colors: isDark 
                           ? [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)]
                           : [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
@@ -155,20 +169,186 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
             ],
           ),
-          // Content
+          // Balance Card and Header
           SliverToBoxAdapter(
-            child: _TransactionView(
-              balance: _currentBalance,
-              onBalanceUpdate: (val) {
-                setState(() {
-                  onBalanceUpdate(val);
-                });
-              },
+            child: Column(
+              children: [
+                BalanceCard(
+                  balance: balance,
+                  onBalanceUpdate: (newBalance) async {
+                    final box = Hive.box<double>('balanceBox');
+                    await box.put('startingBalance', newBalance);
+                    Provider.of<TransactionProvider>(context, listen: false)
+                        .updateBalance(newBalance);
+                  },
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.history,
+                        color: Colors.teal.shade600,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Recent Transactions",
+                        style: GoogleFonts.nunito(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          // Bottom padding to prevent UI glitches
+          // Transaction List
+          if (hasTransactions)
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  String dateKey = grouped.keys.elementAt(index);
+                  List<Transaction> dayTxs = grouped[dateKey]!;
+                  List<Transaction> dayIncomes = dayTxs.where((t) => t.isIncome).toList();
+                  List<Transaction> dayExpenses = dayTxs.where((t) => !t.isIncome).toList();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Combined Date and Transaction Type Header
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        child: Row(
+                          children: [
+                            // Date Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.teal.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.teal.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Text(
+                                dateKey,
+                                style: GoogleFonts.nunito(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.teal.shade700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Income Badge
+                            if (dayIncomes.isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.green.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.trending_up, color: Colors.green, size: 12),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      "Income",
+                                      style: GoogleFonts.nunito(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            const SizedBox(width: 6),
+                            // Expense Badge
+                            if (dayExpenses.isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.red.withOpacity(0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.trending_down, color: Colors.red, size: 12),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      "Expenses",
+                                      style: GoogleFonts.nunito(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.red,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      ...dayIncomes.map((tx) => TransactionTile(transaction: tx, index: index)).toList(),
+                      ...dayExpenses.map((tx) => TransactionTile(transaction: tx, index: index)).toList(),
+                      const SizedBox(height: 12),
+                    ],
+                  );
+                },
+                childCount: grouped.length,
+              ),
+            )
+          else
+            SliverToBoxAdapter(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.account_balance_wallet,
+                      size: 80,
+                      color: Colors.grey.shade400,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "No Transactions Yet",
+                      style: GoogleFonts.nunito(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Add your first transaction to get started",
+                      style: GoogleFonts.nunito(
+                        fontSize: 16,
+                        color: Colors.grey.shade500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          // Bottom padding for better readability
           SliverToBoxAdapter(
-            child: SizedBox(height: 120),
+            child: SizedBox(height: 80),
           ),
         ],
       ),
@@ -289,7 +469,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   void _showSearchDialog(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = context.watch<AppThemeProvider>().isDarkMode;
+    final isDark = Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
     final searchController = TextEditingController();
 
     showDialog(
@@ -341,7 +521,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     String _account = "Cash";
     bool _isIncome = isIncome;
     final theme = Theme.of(context);
-    final isDark = context.watch<AppThemeProvider>().isDarkMode;
+    final isDark = Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
 
     // Predefined categories
     final List<String> incomeCategories = [
@@ -529,32 +709,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       },
     );
   }
-}
 
-class _TransactionView extends StatefulWidget {
-  final double balance;
-  final Function(double) onBalanceUpdate;
-  const _TransactionView({
-    required this.balance,
-    required this.onBalanceUpdate,
-  });
-
-  @override
-  State<_TransactionView> createState() => _TransactionViewState();
-}
-
-class _TransactionViewState extends State<_TransactionView> {
-  Map<String, List<Transaction>> _groupTransactionsByDate(
-      List<Transaction> transactions) {
+  Map<String, List<Transaction>> _groupTransactionsByDate(List<Transaction> transactions) {
     Map<String, List<Transaction>> grouped = {};
-
     for (var tx in transactions) {
       String formattedDate;
       DateTime now = DateTime.now();
       DateTime txDate = DateTime(tx.date.year, tx.date.month, tx.date.day);
       DateTime today = DateTime(now.year, now.month, now.day);
       DateTime yesterday = today.subtract(const Duration(days: 1));
-
       if (txDate == today) {
         formattedDate = "Today";
       } else if (txDate == yesterday) {
@@ -562,270 +725,11 @@ class _TransactionViewState extends State<_TransactionView> {
       } else {
         formattedDate = DateFormat.yMMMMd().format(tx.date);
       }
-
       if (!grouped.containsKey(formattedDate)) {
         grouped[formattedDate] = [];
       }
       grouped[formattedDate]!.add(tx);
     }
-
     return grouped;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final txns = context.watch<TransactionProvider>().transactions;
-    final spends = txns.where((t) => !t.isIncome).toList()
-      ..sort((a, b) => b.date.compareTo(a.date)); // 👈 newest first
-
-    final incomes = txns.where((t) => t.isIncome).toList()
-      ..sort((a, b) => b.date.compareTo(a.date)); // 👈 newest first
-
-    final balance = context.watch<TransactionProvider>().totalBalance;
-    return Column(
-      children: [
-        BalanceCard(
-          balance: balance,
-          onBalanceUpdate: (newBalance) async {
-            final box = Hive.box<double>('balanceBox');
-            await box.put('startingBalance', newBalance);
-            // Optional: trigger UI update if you're managing balance state separately
-            Provider.of<TransactionProvider>(context, listen: false)
-                .updateBalance(newBalance);
-          },
-        ),
-        Expanded(
-          child: incomes.isNotEmpty || spends.isNotEmpty
-              ? SingleChildScrollView(
-                  padding: const EdgeInsets.only(bottom: 100),
-                  child: Column(
-                    children: [
-                      // Recent Transactions Header
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.history,
-                              color: Colors.teal.shade600,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              "Recent Transactions",
-                              style: GoogleFonts.nunito(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.teal.shade700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      
-                      // Transactions in a single column for better layout
-                      _buildTransactionsList(spends, incomes),
-                    ],
-                  ),
-                )
-              : Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.account_balance_wallet,
-                        size: 80,
-                        color: Colors.grey.shade400,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        "No Transactions Yet",
-                        style: GoogleFonts.nunito(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Add your first transaction to get started",
-                        style: GoogleFonts.nunito(
-                          fontSize: 16,
-                          color: Colors.grey.shade500,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTransactionsList(List<Transaction> spends, List<Transaction> incomes) {
-    // Combine and sort all transactions by date
-    List<Transaction> allTransactions = [...spends, ...incomes];
-    allTransactions.sort((a, b) => b.date.compareTo(a.date));
-    
-    final grouped = _groupTransactionsByDate(allTransactions);
-    
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: grouped.length,
-      itemBuilder: (context, index) {
-        String dateKey = grouped.keys.elementAt(index);
-        List<Transaction> dayTxs = grouped[dateKey]!;
-        
-        // Separate income and expenses for this day
-        List<Transaction> dayIncomes = dayTxs.where((t) => t.isIncome).toList();
-        List<Transaction> dayExpenses = dayTxs.where((t) => !t.isIncome).toList();
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Date Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.teal.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.teal.withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Text(
-                  dateKey,
-                  style: GoogleFonts.nunito(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal.shade700,
-                  ),
-                ),
-              ),
-            ),
-            
-            // Income transactions
-            if (dayIncomes.isNotEmpty) ...[
-              _buildSectionHeader("Income", Colors.green, Icons.trending_up),
-              ...dayIncomes.map((tx) => TransactionTile(
-                transaction: tx,
-                index: index,
-              )).toList(),
-            ],
-            
-            // Expense transactions
-            if (dayExpenses.isNotEmpty) ...[
-              _buildSectionHeader("Expenses", Colors.red, Icons.trending_down),
-              ...dayExpenses.map((tx) => TransactionTile(
-                transaction: tx,
-                index: index,
-              )).toList(),
-            ],
-            
-            const SizedBox(height: 16),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildSectionHeader(String title, Color color, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: 14),
-          const SizedBox(width: 6),
-          Text(
-            title,
-            style: GoogleFonts.nunito(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildColumn(String title, List<Transaction> txList) {
-    final grouped = _groupTransactionsByDate(txList);
-    final isDark = context.watch<AppThemeProvider>().isDarkMode;
-    return grouped.isNotEmpty
-        ? Expanded(
-            child: ListView.builder(
-              itemCount: grouped.length,
-              itemBuilder: (context, index) {
-                String dateKey = grouped.keys.elementAt(index);
-                List<Transaction> dayTxs = grouped[dateKey]!;
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    //title
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 6, horizontal: 10),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.teal[900] : Colors.teal[100],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 12),
-                      child: Text(
-                        dateKey,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.teal,
-                        ),
-                      ),
-                    ),
-                    ...dayTxs
-                        .map((tx) => TransactionTile(
-                              transaction: tx,
-                              index: index,
-                            ))
-                        .toList(),
-                  ],
-                );
-              },
-            ),
-          )
-        : Expanded(
-            child: Center(
-              child: Text(
-                "No Transaction \n for $title "
-                "\n plz add ",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : Colors.black,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          );
   }
 }

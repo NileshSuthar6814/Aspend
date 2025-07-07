@@ -20,8 +20,8 @@ class PersonProvider extends ChangeNotifier {
     return transactionsFor(name).fold(0.0, (sum, tx) => sum + tx.amount);
   }
 
-  Future<void> addPerson(String name) async {
-    await _peopleBox.add(Person(name: name));
+  Future<void> addPerson(String name, {String? photoPath}) async {
+    await _peopleBox.add(Person(name: name, photoPath: photoPath));
     notifyListeners();
   }
 

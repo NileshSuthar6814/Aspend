@@ -15,32 +15,48 @@ class TransactionProvider with ChangeNotifier {
 
   double get totalBalance => _currentBalance;
 
-  void loadTransactions() {
-    final txBox = Hive.box<Transaction>('transactions');
-    final balanceBox = Hive.box<double>('balanceBox');
+  void loadTransactions() async {
+    try {
+      // Load transactions
+      final box = await Hive.openBox('transactions');
+      final transactions = box.values.toList();
+      _transactions = transactions.cast<Transaction>();
 
-    // Load transactions
-    _transactions = txBox.values.toList();
+      // Load current balance from Hive
+      final balanceBox = Hive.box<double>('balanceBox');
+      _currentBalance = balanceBox.get('currentBalance', defaultValue: 0.0) ?? 0.0;
 
-    // Load current balance from Hive
-    _currentBalance =
-        balanceBox.get('currentBalance', defaultValue: 0.0) ?? 0.0;
-
-    notifyListeners();
+      notifyListeners();
+    } catch (e) {
+      print('Error loading transactions: $e');
+      // Fallback to direct Hive access
+      final txBox = Hive.box<Transaction>('transactions');
+      final balanceBox = Hive.box<double>('balanceBox');
+      _transactions = txBox.values.toList();
+      _currentBalance = balanceBox.get('currentBalance', defaultValue: 0.0) ?? 0.0;
+      notifyListeners();
+    }
   }
 
-  void addTransaction(Transaction tx) {
-    final txBox = Hive.box<Transaction>('transactions');
-    txBox.add(tx);
-    _transactions.add(tx);
-
-    // Update balance and persist
-    addOrMinusBalance(tx.amount, tx.isIncome);
-    
-    // Update home widget
-    _updateHomeWidget();
-    
-    notifyListeners();
+  void addTransaction(Transaction tx) async {
+    try {
+      // Update balance and persist
+      addOrMinusBalance(tx.amount, tx.isIncome);
+      
+      // Update home widget
+      _updateHomeWidget();
+      
+      notifyListeners();
+    } catch (e) {
+      print('Error adding transaction: $e');
+      // Fallback to direct Hive access
+      final txBox = Hive.box<Transaction>('transactions');
+      txBox.add(tx);
+      _transactions.add(tx);
+      addOrMinusBalance(tx.amount, tx.isIncome);
+      _updateHomeWidget();
+      notifyListeners();
+    }
   }
 
   void deleteTransaction(Transaction transaction) async {

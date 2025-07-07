@@ -19,20 +19,14 @@ import 'models/theme.dart';
 import 'screens/settings_page.dart';
 import 'screens/home_page.dart';
 import 'screens/chart_page.dart';
+import 'screens/intro_page.dart';
 import 'models/transaction.dart';
 import 'providers/transaction_provider.dart';
 import 'providers/theme_provider.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
 import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
-// Background callback for home widget
-@pragma('vm:entry-point')
-void backgroundCallback(Uri? uri) {
-  if (uri?.host == 'addTransaction') {
-    // Handle widget click - this will be processed when app opens
-  }
-}
-
+// 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
@@ -192,45 +186,49 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-
+    print('SplashScreen: initState start');
     _controller = AnimationController(
-      vsync: this, 
-      duration: const Duration(milliseconds: 1500)
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
     );
-    
     _fade = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut)
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
-    
     _scale = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut)
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
     );
-    
     _slide = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic)
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
     );
-    
     _controller.forward();
-
-    HomeWidget.initiallyLaunchedFromHomeWidget().then((Uri? uri) {
+    print('SplashScreen: Animation started');
+    HomeWidget.initiallyLaunchedFromHomeWidget().then((Uri? uri) async {
+      print('SplashScreen: HomeWidget callback');
       if (uri != null && uri.host == 'addTransaction') {
+        print('SplashScreen: Launched from widget');
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => HomePage()),
         );
       } else {
+        print('SplashScreen: Not launched from widget, checking intro');
+        final box = await Hive.openBox('settings');
+        final introCompleted = box.get('introCompleted', defaultValue: false);
+        print('SplashScreen: introCompleted = '
+            + introCompleted.toString());
         Future.delayed(const Duration(seconds: 2), () {
+          print('SplashScreen: Navigating to next screen');
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const RootNavigation()),
+            MaterialPageRoute(
+              builder: (_) => introCompleted
+                  ? const RootNavigation()
+                  : const IntroPage(),
+            ),
           );
         });
       }
     });
-    
-    // Set up home widget click handler
-    HomeWidget.setAppGroupId('your_app_group_id');
-    HomeWidget.registerBackgroundCallback(backgroundCallback);
   }
 
   @override
@@ -340,13 +338,6 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
-  final List<Widget> _screens = [
-    HomePage(),
-    PeopleTab(),
-    ChartPage(),
-    SettingsPage(),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -392,6 +383,12 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
     //final isDark = context.watch<AppThemeProvider>().isDarkMode;
+    final List<Widget> _screens = [
+      HomePage(),
+      PeopleTab(),
+      ChartPage(),
+      SettingsPage(),
+    ];
     return Scaffold(
       body: FadeTransition(
         opacity: _fadeAnimation,
@@ -463,14 +460,21 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
           });
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1.5), // Reduced vertical padding
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12), // Smaller radius for half height
-            color: isSelected ? Colors.teal.withOpacity(0.18) : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+            color: isSelected ? Colors.teal.withOpacity(0.2) : Colors.transparent,
             border: isSelected ? Border.all(
-              color: Colors.teal.withOpacity(0.5),
-              width: 1,
+              color: Colors.teal.withOpacity(0.6),
+              width: 1.5,
             ) : null,
+            boxShadow: isSelected ? [
+              BoxShadow(
+                color: Colors.teal.withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ] : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -481,16 +485,16 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
                   icon,
                   key: ValueKey(isSelected),
                   color: isSelected ? Colors.teal.shade700 : Colors.grey.shade600,
-                  size: isSelected ? 20 : 18, // Slightly smaller icons
+                  size: isSelected ? 22 : 20,
                 ),
               ),
               if (isSelected) ...[
-                const SizedBox(width: 4),
+                const SizedBox(width: 6),
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 200),
                   style: TextStyle(
                     color: Colors.teal.shade700,
-                    fontSize: 10, // Smaller font
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
                   child: Text(label),

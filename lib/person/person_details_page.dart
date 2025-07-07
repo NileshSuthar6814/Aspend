@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
+import 'dart:io';
 import '../models/person.dart';
 import '../models/person_transaction.dart';
 import '../providers/person_provider.dart';
@@ -147,19 +148,40 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                           width: 60,
                           height: 60,
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                isPositive ? Colors.green : Colors.red,
-                                isPositive ? Colors.green.withOpacity(0.8) : Colors.red.withOpacity(0.8),
-                              ],
-                            ),
+                            gradient: widget.person.photoPath != null
+                                ? null
+                                : LinearGradient(
+                                    colors: [
+                                      isPositive ? Colors.green : Colors.red,
+                                      isPositive ? Colors.green.withOpacity(0.8) : Colors.red.withOpacity(0.8),
+                                    ],
+                                  ),
+                            color: widget.person.photoPath != null
+                                ? Colors.transparent
+                                : null,
                             borderRadius: BorderRadius.circular(30),
+                            border: widget.person.photoPath != null
+                                ? Border.all(
+                                    color: isPositive ? Colors.green : Colors.red,
+                                    width: 2,
+                                  )
+                                : null,
                           ),
-                          child: Icon(
-                            isPositive ? Icons.trending_up : Icons.trending_down,
-                            color: Colors.white,
-                            size: 30,
-                          ),
+                          child: widget.person.photoPath != null
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(28),
+                                  child: Image.file(
+                                    File(widget.person.photoPath!),
+                                    width: 56,
+                                    height: 56,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : Icon(
+                                  isPositive ? Icons.trending_up : Icons.trending_down,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
                         ),
                         const SizedBox(width: 20),
                         Expanded(
@@ -290,7 +312,7 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                         itemBuilder: (c, i) {
                           // Add bottom padding as last item
                           if (i == txs.length) {
-                            return const SizedBox(height: 120);
+                            return const SizedBox(height: 80);
                           }
                           
                           final tx = txs[i];

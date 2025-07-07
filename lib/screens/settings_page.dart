@@ -2,10 +2,10 @@ import 'package:aspends_tracker/screens/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:aspends_tracker/providers/theme_provider.dart';
 import 'package:flutter/services.dart';
-//import 'package:hive/hive.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hive/hive.dart';
 
 import '../backup/export_csv.dart';
 import '../backup/import_csv.dart';
@@ -114,7 +114,7 @@ class _SettingsPageState extends State<SettingsPage> {
         Text(
           title,
           style: GoogleFonts.nunito(
-            fontSize: 18,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
             color: Colors.teal.shade700,
           ),
@@ -143,13 +143,13 @@ class _SettingsPageState extends State<SettingsPage> {
                         "Theme",
                         style: GoogleFonts.nunito(
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          fontSize: 18,
                         ),
                       ),
                       Text(
                         "Choose your preferred theme",
                         style: GoogleFonts.nunito(
-                          fontSize: 12,
+                          fontSize: 14,
                           color: Colors.grey.shade600,
                         ),
                       ),
@@ -272,6 +272,16 @@ class _SettingsPageState extends State<SettingsPage> {
             _confirmDeleteAll(context);
           },
         ),
+        _buildSettingsTile(
+          icon: Icons.refresh,
+          title: "Reset Intro",
+          subtitle: "Show intro screens again",
+          onTap: () {
+            HapticFeedback.lightImpact();
+            _confirmResetIntro(context);
+          },
+        ),
+
       ],
     );
   }
@@ -348,14 +358,14 @@ class _SettingsPageState extends State<SettingsPage> {
           title,
           style: GoogleFonts.nunito(
             fontWeight: FontWeight.w600,
-            fontSize: 14,
+            fontSize: 16,
             color: isDestructive ? Colors.red : null,
           ),
         ),
         subtitle: Text(
           subtitle,
           style: GoogleFonts.nunito(
-            fontSize: 11,
+            fontSize: 13,
             color: Colors.grey.shade600,
           ),
         ),
@@ -441,12 +451,83 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             onPressed: () async {
               HapticFeedback.lightImpact();
-              await Provider.of<TransactionProvider>(context, listen: false)
-                  .deleteAllData();
-              await Provider.of<PersonProvider>(context, listen: false)
-                  .deleteAllPeopleAndTransactions();
+              try {
+                final box = await Hive.openBox<double>('balanceBox');
+                await box.clear();
+                await Provider.of<TransactionProvider>(context, listen: false)
+                    .deleteAllData();
+                await Provider.of<PersonProvider>(context, listen: false)
+                    .deleteAllPeopleAndTransactions();
+                Navigator.pop(context);
+                _showSnackBar(context, "All data deleted successfully!");
+              } catch (e) {
+                Navigator.pop(context);
+                _showSnackBar(context, "Failed to delete all data. Please try again.");
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmResetIntro(BuildContext context) async {
+    final isDark = context.watch<AppThemeProvider>().isDarkMode;
+    final theme = Theme.of(context);
+    
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: theme.dialogBackgroundColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.refresh, color: Colors.orange, size: 24),
+            const SizedBox(width: 8),
+            Text(
+              "Reset Intro",
+              style: GoogleFonts.nunito(
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          "This will show the intro screens again the next time you open the app. Your data will remain unchanged.",
+          style: GoogleFonts.nunito(
+            color: isDark ? Colors.white70 : Colors.black87,
+          ),
+        ),
+        actions: [
+          TextButton(
+            child: Text(
+              "Cancel",
+              style: TextStyle(color: theme.colorScheme.primary),
+            ),
+            onPressed: () {
               Navigator.pop(context);
-              _showSnackBar(context, "All data deleted successfully!");
+              HapticFeedback.lightImpact();
+            },
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.refresh),
+            label: const Text("Reset"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              HapticFeedback.lightImpact();
+              try {
+                final box = await Hive.openBox<double>('balanceBox');
+                await box.clear();
+                Navigator.pop(context);
+                _showSnackBar(context, "Intro reset successfully!");
+              } catch (e) {
+                Navigator.pop(context);
+                _showSnackBar(context, "Failed to reset intro. Please try again.");
+              }
             },
           ),
         ],

@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'dart:ui';
+import 'dart:io';
 import '../providers/person_provider.dart';
 import '../person/person_details_page.dart';
 import '../providers/theme_provider.dart';
@@ -64,10 +66,10 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
 
     _scrollController.addListener(() {
       final direction = _scrollController.position.userScrollDirection;
-      if (direction == ScrollDirection.reverse && _showFab) {
+      if (direction == ScrollDirection.forward && _showFab) {
         setState(() => _showFab = false);
         _fabVisibilityController.forward();
-      } else if (direction == ScrollDirection.forward && !_showFab) {
+      } else if (direction == ScrollDirection.reverse && !_showFab) {
         setState(() => _showFab = true);
         _fabVisibilityController.reverse();
       }
@@ -86,76 +88,143 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
   void _showAddPersonDialog(BuildContext context) {
     final controller = TextEditingController();
     final theme = Theme.of(context);
+    String? selectedPhotoPath;
     
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          'Add New Person',
-          style: GoogleFonts.nunito(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
+      builder: (_) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text(
+            'Add New Person',
+            style: GoogleFonts.nunito(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+            ),
           ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Enter the name of the person you want to track transactions with',
-              style: GoogleFonts.nunito(
-                fontSize: 14,
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+                              // Photo Selection
+                GestureDetector(
+                  onTap: () async {
+                    final ImagePicker picker = ImagePicker();
+                    final XFile? image = await picker.pickImage(
+                      source: ImageSource.gallery,
+                      maxWidth: 300,
+                      maxHeight: 300,
+                      imageQuality: 80,
+                    );
+                    
+                    if (image != null) {
+                      setState(() {
+                        selectedPhotoPath = image.path;
+                      });
+                    }
+                  },
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: selectedPhotoPath != null 
+                        ? theme.colorScheme.primary.withOpacity(0.1)
+                        : theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(50),
+                    border: Border.all(
+                      color: selectedPhotoPath != null 
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.outline.withOpacity(0.3),
+                      width: 2,
+                    ),
+                  ),
+                  child: selectedPhotoPath != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(48),
+                          child: Image.file(
+                            File(selectedPhotoPath!),
+                            width: 96,
+                            height: 96,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add_a_photo,
+                              size: 30,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Add Photo',
+                              style: GoogleFonts.nunito(
+                                fontSize: 12,
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Enter the name of the person you want to track transactions with',
+                style: GoogleFonts.nunito(
+                  fontSize: 14,
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  labelText: 'Person Name',
+                  labelStyle: GoogleFonts.nunito(fontSize: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: theme.colorScheme.surface,
+                  prefixIcon: Icon(Icons.person_outline, color: theme.colorScheme.primary),
+                ),
+                style: GoogleFonts.nunito(fontSize: 16),
+                autofocus: true,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: controller,
-              decoration: InputDecoration(
-                labelText: 'Person Name',
-                labelStyle: GoogleFonts.nunito(fontSize: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                filled: true,
-                fillColor: theme.colorScheme.surface,
-                prefixIcon: Icon(Icons.person_outline, color: theme.colorScheme.primary),
+            ElevatedButton(
+              onPressed: () {
+                final name = controller.text.trim();
+                if (name.isNotEmpty) {
+                  context.read<PersonProvider>().addPerson(name, photoPath: selectedPhotoPath);
+                  Navigator.pop(context);
+                  HapticFeedback.lightImpact();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
-              style: GoogleFonts.nunito(fontSize: 16),
-              autofocus: true,
+              child: Text(
+                'Add Person',
+                style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final name = controller.text.trim();
-              if (name.isNotEmpty) {
-                context.read<PersonProvider>().addPerson(name);
-                Navigator.pop(context);
-                HapticFeedback.lightImpact();
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: theme.colorScheme.onPrimary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: Text(
-              'Add Person',
-              style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -243,12 +312,12 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
                 )
               : ListView.builder(
                   controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   itemCount: people.length + 1, // +1 for bottom padding
                   itemBuilder: (_, idx) {
                     // Add bottom padding as last item
                     if (idx == people.length) {
-                      return const SizedBox(height: 120);
+                      return const SizedBox(height: 80);
                     }
                     
                     final person = people[idx];
@@ -305,19 +374,40 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
                                           width: 60,
                                           height: 60,
                                           decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              colors: [
-                                                theme.colorScheme.primary,
-                                                theme.colorScheme.primary.withOpacity(0.8),
-                                              ],
-                                            ),
+                                            gradient: person.photoPath != null
+                                                ? null
+                                                : LinearGradient(
+                                                    colors: [
+                                                      theme.colorScheme.primary,
+                                                      theme.colorScheme.primary.withOpacity(0.8),
+                                                    ],
+                                                  ),
+                                            color: person.photoPath != null
+                                                ? Colors.transparent
+                                                : null,
                                             borderRadius: BorderRadius.circular(30),
+                                            border: person.photoPath != null
+                                                ? Border.all(
+                                                    color: theme.colorScheme.primary.withOpacity(0.3),
+                                                    width: 2,
+                                                  )
+                                                : null,
                                           ),
-                                          child: Icon(
-                                            Icons.person,
-                                            color: Colors.white,
-                                            size: 30,
-                                          ),
+                                          child: person.photoPath != null
+                                              ? ClipRRect(
+                                                  borderRadius: BorderRadius.circular(28),
+                                                  child: Image.file(
+                                                    File(person.photoPath!),
+                                                    width: 56,
+                                                    height: 56,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                )
+                                              : Icon(
+                                                  Icons.person,
+                                                  color: Colors.white,
+                                                  size: 30,
+                                                ),
                                         ),
                                         const SizedBox(width: 16),
                                         Expanded(
