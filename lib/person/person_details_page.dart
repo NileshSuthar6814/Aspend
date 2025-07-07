@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -9,6 +11,8 @@ import '../models/person.dart';
 import '../models/person_transaction.dart';
 import '../providers/person_provider.dart';
 import '../providers/theme_provider.dart';
+import 'dart:async';
+import 'package:flutter/rendering.dart';
 
 class PersonDetailPage extends StatefulWidget {
   final Person person;
@@ -24,6 +28,8 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
   late AnimationController _slideController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  late ScrollController _scrollController;
+  bool _showFab = true;
 
   @override
   void initState() {
@@ -50,12 +56,25 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
 
     _fadeController.forward();
     _slideController.forward();
+    _scrollController = ScrollController();
+    _scrollController.addListener(() {
+      if (!_scrollController.hasClients) return;
+      final atTop = _scrollController.position.pixels <= 0;
+      final txs = context.read<PersonProvider>().transactionsFor(widget.person.name);
+      final isEmpty = txs.isEmpty;
+      if (atTop || isEmpty) {
+        if (!_showFab) setState(() => _showFab = true);
+      } else {
+        if (_showFab) setState(() => _showFab = false);
+      }
+    });
   }
 
   @override
   void dispose() {
     _fadeController.dispose();
     _slideController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -67,46 +86,77 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
     final isPositive = total >= 0;
     final theme = Theme.of(context);
     final isDark = context.watch<AppThemeProvider>().isDarkMode;
+    final useAdaptive = context.watch<AppThemeProvider>().useAdaptiveColor;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          widget.person.name,
-          style: GoogleFonts.nunito(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(70),
+        child: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          flexibleSpace: ClipRRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: useAdaptive
+                      ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
+                      : isDark 
+                        ? [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)]
+                        : [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
+                  ),
+                ),
+              ),
+            ),
           ),
+          title: Text(
+            widget.person.name,
+            style: GoogleFonts.nunito(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          actions: [
+            IconButton(
+              icon: Icon(
+                Icons.delete_outline,
+                color: Colors.red,
+                size: 24,
+              ),
+              onPressed: () {
+                _showDeleteConfirmation(context);
+              },
+            ),
+          ],
         ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(
-              Icons.delete_outline,
-              color: Colors.red,
-              size: 24,
+      ),
+      floatingActionButton: AnimatedSlide(
+        offset: _showFab ? Offset.zero : const Offset(0, 2),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        child: AnimatedOpacity(
+          opacity: _showFab ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 300),
+          child: FloatingActionButton.extended(
+            backgroundColor: theme.colorScheme.primary,
+            foregroundColor: theme.colorScheme.onPrimary,
+            icon: const Icon(Icons.add, size: 24),
+            label: Text(
+              'Add Transaction',
+              style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             onPressed: () {
-              _showDeleteConfirmation(context);
+              _showAddTxDialog(context);
+              HapticFeedback.lightImpact();
             },
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: theme.colorScheme.primary,
-        foregroundColor: theme.colorScheme.onPrimary,
-        icon: const Icon(Icons.add, size: 24),
-        label: Text(
-          'Add Transaction',
-          style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
         ),
-        onPressed: () {
-          _showAddTxDialog(context);
-          HapticFeedback.lightImpact();
-        },
       ),
       body: FadeTransition(
         opacity: _fadeAnimation,
@@ -120,10 +170,12 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [
-                        theme.colorScheme.surface,
-                        theme.colorScheme.surface.withOpacity(0.8),
-                      ],
+                      colors: useAdaptive
+                        ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
+                        : [
+                            theme.colorScheme.surface,
+                            theme.colorScheme.surface.withOpacity(0.8),
+                          ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -150,12 +202,21 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                           decoration: BoxDecoration(
                             gradient: widget.person.photoPath != null
                                 ? null
-                                : LinearGradient(
-                                    colors: [
-                                      isPositive ? Colors.green : Colors.red,
-                                      isPositive ? Colors.green.withOpacity(0.8) : Colors.red.withOpacity(0.8),
-                                    ],
-                                  ),
+                                : useAdaptive
+                                    ? LinearGradient(
+                                        colors: [
+                                          theme.colorScheme.primaryContainer,
+                                          theme.colorScheme.secondaryContainer,
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      )
+                                    : LinearGradient(
+                                        colors: [
+                                          isPositive ? Colors.green : Colors.red,
+                                          isPositive ? Colors.green.withOpacity(0.8) : Colors.red.withOpacity(0.8),
+                                        ],
+                                      ),
                             color: widget.person.photoPath != null
                                 ? Colors.transparent
                                 : null,
@@ -179,7 +240,7 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                                 )
                               : Icon(
                                   isPositive ? Icons.trending_up : Icons.trending_down,
-                                  color: Colors.white,
+                                  color: useAdaptive ? theme.colorScheme.onPrimaryContainer : Colors.white,
                                   size: 30,
                                 ),
                         ),
@@ -337,10 +398,12 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                                         child: Container(
                                           decoration: BoxDecoration(
                                             gradient: LinearGradient(
-                                              colors: [
-                                                theme.colorScheme.surface,
-                                                theme.colorScheme.surface.withOpacity(0.8),
-                                              ],
+                                              colors: useAdaptive
+                                                ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
+                                                : [
+                                                    theme.colorScheme.surface,
+                                                    theme.colorScheme.surface.withOpacity(0.8),
+                                                  ],
                                               begin: Alignment.topLeft,
                                               end: Alignment.bottomRight,
                                             ),
@@ -366,10 +429,12 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                                                   height: 50,
                                                   decoration: BoxDecoration(
                                                     gradient: LinearGradient(
-                                                      colors: [
-                                                        isPositiveTx ? Colors.green : Colors.red,
-                                                        isPositiveTx ? Colors.green.withOpacity(0.8) : Colors.red.withOpacity(0.8),
-                                                      ],
+                                                      colors: useAdaptive
+                                                        ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
+                                                        : [
+                                                            isPositiveTx ? Colors.green : Colors.red,
+                                                            isPositiveTx ? Colors.green.withOpacity(0.8) : Colors.red.withOpacity(0.8),
+                                                          ],
                                                     ),
                                                     borderRadius: BorderRadius.circular(25),
                                                   ),

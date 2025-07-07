@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:ui';
 import '../main.dart';
 import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 
 class IntroPage extends StatefulWidget {
   const IntroPage({super.key});
@@ -195,6 +197,7 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final useAdaptive = context.watch<AppThemeProvider>().useAdaptiveColor;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -327,6 +330,9 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
   }
 
   Widget _buildSlide(IntroSlide slide, ThemeData theme, bool isDark) {
+    final useAdaptive = context.watch<AppThemeProvider>().useAdaptiveColor;
+    final primary = theme.colorScheme.primary;
+    final primaryContainer = theme.colorScheme.primaryContainer;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -337,10 +343,10 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: slide.color.withOpacity(0.1),
+              color: useAdaptive ? primary.withOpacity(0.1) : slide.color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(60),
               border: Border.all(
-                color: slide.color.withOpacity(0.3),
+                color: useAdaptive ? primary.withOpacity(0.3) : slide.color.withOpacity(0.3),
                 width: 2,
               ),
             ),
@@ -350,13 +356,13 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: slide.color.withOpacity(0.1),
+                    color: useAdaptive ? primary.withOpacity(0.1) : slide.color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(58),
                   ),
                   child: Icon(
                     slide.icon,
                     size: 60,
-                    color: slide.color,
+                    color: useAdaptive ? primary : slide.color,
                   ),
                 ),
               ),

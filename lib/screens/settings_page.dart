@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:aspends_tracker/screens/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:aspends_tracker/providers/theme_provider.dart';
@@ -6,6 +8,7 @@ import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
+import 'package:flutter/rendering.dart';
 
 import '../backup/export_csv.dart';
 import '../backup/import_csv.dart';
@@ -29,6 +32,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = context.watch<AppThemeProvider>().isDarkMode;
+    final useAdaptive = context.watch<AppThemeProvider>().useAdaptiveColor;
     
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -36,31 +40,40 @@ class _SettingsPageState extends State<SettingsPage> {
         slivers: [
           // Enhanced App Bar
           SliverAppBar(
-            expandedHeight: 70,
+            expandedHeight: 100,
             floating: true,
             pinned: true,
-            elevation: 0,
-            backgroundColor: theme.colorScheme.surface,
+            elevation: 1,
+            backgroundColor: Colors.transparent,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                "Settings",
+                'Settings',
                 style: GoogleFonts.nunito(
                   fontWeight: FontWeight.bold,
+                  fontSize: 24,
                   color: theme.colorScheme.onSurface,
                 ),
               ),
-              background: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDark 
-                      ? [Colors.teal.shade900, Colors.teal.shade700]
-                      : [Colors.teal.shade100, Colors.teal.shade200],
+              background: ClipRRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: useAdaptive
+                          ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
+                          : isDark 
+                            ? [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)]
+                            : [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
+            centerTitle: true,
           ),
           
           // Settings Content
@@ -74,6 +87,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   _buildSectionHeader("Appearance", Icons.palette),
                   const SizedBox(height: 12),
                   _buildThemeCard(context, isDark),
+                  const SizedBox(height: 16),
+                  _buildAdaptiveColorSwitch(context),
                   const SizedBox(height: 24),
                   
                   // Backup & Export Section
@@ -103,11 +118,13 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildSectionHeader(String title, IconData icon) {
+    final theme = Theme.of(context);
+    final useAdaptive = context.watch<AppThemeProvider>().useAdaptiveColor;
     return Row(
       children: [
         Icon(
           icon,
-          color: Colors.teal.shade600,
+          color: useAdaptive ? theme.colorScheme.primary : Colors.teal.shade600,
           size: 20,
         ),
         const SizedBox(width: 8),
@@ -116,7 +133,7 @@ class _SettingsPageState extends State<SettingsPage> {
           style: GoogleFonts.nunito(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.teal.shade700,
+            color: useAdaptive ? theme.colorScheme.primary : Colors.teal.shade700,
           ),
         ),
       ],
@@ -124,6 +141,8 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildThemeCard(BuildContext context, bool isDark) {
+    final theme = Theme.of(context);
+    final useAdaptive = context.watch<AppThemeProvider>().useAdaptiveColor;
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -133,7 +152,7 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             Row(
               children: [
-                Icon(Icons.palette, size: 24, color: Colors.teal.shade600),
+                Icon(Icons.palette, size: 24, color: useAdaptive ? theme.colorScheme.primary : Colors.teal.shade600),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -182,6 +201,35 @@ class _SettingsPageState extends State<SettingsPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAdaptiveColorSwitch(BuildContext context) {
+    final provider = context.watch<AppThemeProvider>();
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.color_lens, color: Colors.teal.shade600, size: 24),
+            const SizedBox(width: 12),
+            Text(
+              "Adaptive Android Color",
+              style: GoogleFonts.nunito(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+        Switch(
+          value: provider.useAdaptiveColor,
+          onChanged: (value) {
+            HapticFeedback.lightImpact();
+            provider.setAdaptiveColor(value);
+          },
+        ),
+      ],
     );
   }
 

@@ -52,8 +52,9 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     final isPositive = widget.balance >= 0;
-    final isDark = context.watch<AppThemeProvider>().isDarkMode;
     final theme = Theme.of(context);
+    final isDark = context.watch<AppThemeProvider>().isDarkMode;
+    final useAdaptive = context.watch<AppThemeProvider>().useAdaptiveColor;
     
     // Get transaction statistics
     final transactionProvider = context.watch<TransactionProvider>();
@@ -77,17 +78,19 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: isDark
-                    ? [
-                        Colors.teal.shade900,
-                        Colors.teal.shade800,
-                        Colors.teal.shade700,
-                      ]
-                    : [
-                        Colors.teal.shade100,
-                        Colors.teal.shade200,
-                        Colors.teal.shade300,
-                      ],
+                colors: useAdaptive
+                    ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
+                    : isDark
+                        ? [
+                            Colors.teal.shade900,
+                            Colors.teal.shade800,
+                            Colors.teal.shade700,
+                          ]
+                        : [
+                            Colors.teal.shade100,
+                            Colors.teal.shade200,
+                            Colors.teal.shade300,
+                          ],
               ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [

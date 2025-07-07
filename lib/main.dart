@@ -36,13 +36,41 @@ void main() async {
   Hive.registerAdapter(PersonAdapter());
   Hive.registerAdapter(PersonTransactionAdapter());
 
-  await Hive.openBox<Transaction>('transactions');
-  await Hive.openBox<double>('balanceBox');
-  await Hive.openBox('settings');
-  await Hive.openBox<Person>('people');
-  await Hive.openBox<PersonTransaction>('personTransactions');
+  try {
+    if (!Hive.isBoxOpen('transactions')) {
+      await Hive.openBox<Transaction>('transactions');
+    }
+    if (!Hive.isBoxOpen('balanceBox')) {
+      await Hive.openBox<double>('balanceBox');
+    }
+    if (!Hive.isBoxOpen('settings')) {
+      await Hive.openBox('settings');
+    }
+    if (!Hive.isBoxOpen('people')) {
+      await Hive.openBox<Person>('people');
+    }
+    if (!Hive.isBoxOpen('personTransactions')) {
+      await Hive.openBox<PersonTransaction>('personTransactions');
+    }
+  } catch (e) {
+    runApp(MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Text('Failed to initialize local storage: \n\n'
+              '\u0000A$e',
+            style: TextStyle(color: Colors.red, fontSize: 16),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    ));
+    return;
+  }
 
   await FlutterDisplayMode.setHighRefreshRate();
+
+  // Register background callback for widget events
+  HomeWidget.registerBackgroundCallback(backgroundCallback);
 
   runApp(
     MultiProvider(
@@ -57,56 +85,63 @@ void main() async {
   );
 }
 
+// Background callback for widget events (required by home_widget)
+void backgroundCallback(Uri? uri) async {
+  if (uri != null && uri.host == 'addTransaction') {
+    // You can handle background widget actions here if needed
+    // For example, schedule a notification or update data
+  }
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Listen for widget click actions while app is running
+    HomeWidget.widgetClicked.listen((Uri? uri) {
+      if (uri != null && uri.host == 'addTransaction') {
+        // You can use a navigator key or other logic to open the add transaction screen
+        // For now, just print for debug
+        print('Widget action: addTransaction');
+      }
+    });
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
         final themeProvider = context.watch<AppThemeProvider>();
 
-        // Enhanced color schemes with better contrast and accessibility
-        final lightScheme = lightDynamic ?? ColorScheme.fromSeed(
-          seedColor: Colors.teal,
-          brightness: Brightness.light,
-        );
-        final darkScheme = darkDynamic ?? ColorScheme.fromSeed(
-          seedColor: Colors.teal,
-          brightness: Brightness.dark,
-        );
+        final useAdaptive = themeProvider.useAdaptiveColor;
+        final lightSchemeFinal = useAdaptive ? (lightDynamic ?? ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.light)) : ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.light);
+        final darkSchemeFinal = useAdaptive ? (darkDynamic ?? ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.dark)) : ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.dark);
 
         ThemeData lightTheme = ThemeData(
-          colorScheme: lightScheme,
+          colorScheme: lightSchemeFinal,
           useMaterial3: true,
           fontFamily: 'NFont',
-          textTheme: GoogleFonts.nunitoTextTheme(lightScheme.brightness == Brightness.dark
+          textTheme: GoogleFonts.nunitoTextTheme(lightSchemeFinal.brightness == Brightness.dark
               ? ThemeData.dark().textTheme
               : ThemeData.light().textTheme),
-          // Enhanced card theme
           cardTheme: CardThemeData(
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            color: lightScheme.surface,
+            color: lightSchemeFinal.surface,
           ),
-          // Enhanced input decoration theme
           inputDecorationTheme: InputDecorationTheme(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: lightScheme.outline),
+              borderSide: BorderSide(color: lightSchemeFinal.outline),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: lightScheme.outline.withOpacity(0.5)),
+              borderSide: BorderSide(color: lightSchemeFinal.outline.withOpacity(0.5)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: lightScheme.primary, width: 2),
+              borderSide: BorderSide(color: lightSchemeFinal.primary, width: 2),
             ),
             filled: true,
-            fillColor: lightScheme.surface,
+            fillColor: lightSchemeFinal.surface,
           ),
-          // Enhanced elevated button theme
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
               elevation: 2,
@@ -117,36 +152,33 @@ class MyApp extends StatelessWidget {
         );
 
         ThemeData darkTheme = ThemeData(
-          colorScheme: darkScheme,
+          colorScheme: darkSchemeFinal,
           useMaterial3: true,
           fontFamily: 'NFont',
-          textTheme: GoogleFonts.nunitoTextTheme(darkScheme.brightness == Brightness.dark
+          textTheme: GoogleFonts.nunitoTextTheme(darkSchemeFinal.brightness == Brightness.dark
               ? ThemeData.dark().textTheme
               : ThemeData.light().textTheme),
-          // Enhanced card theme for dark mode
           cardTheme: CardThemeData(
             elevation: 2,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            color: darkScheme.surface,
+            color: darkSchemeFinal.surface,
           ),
-          // Enhanced input decoration theme for dark mode
           inputDecorationTheme: InputDecorationTheme(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: darkScheme.outline),
+              borderSide: BorderSide(color: darkSchemeFinal.outline),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: darkScheme.outline.withOpacity(0.5)),
+              borderSide: BorderSide(color: darkSchemeFinal.outline.withOpacity(0.5)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: darkScheme.primary, width: 2),
+              borderSide: BorderSide(color: darkSchemeFinal.primary, width: 2),
             ),
             filled: true,
-            fillColor: darkScheme.surface,
+            fillColor: darkSchemeFinal.surface,
           ),
-          // Enhanced elevated button theme for dark mode
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
               elevation: 2,
@@ -233,14 +265,18 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    ThemeData theme = Theme.of(context);
+    final useAdaptive = Provider.of<AppThemeProvider>(context).useAdaptiveColor;
     return Scaffold(
-      backgroundColor: Colors.teal,
+      backgroundColor: useAdaptive ? theme.colorScheme.primary : Colors.teal,
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
+            colors: useAdaptive
+              ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer, theme.colorScheme.secondary]
+              : [
               Colors.teal.shade400,
               Colors.teal.shade700,
               Colors.teal.shade900,
@@ -382,7 +418,7 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
   @override
   Widget build(BuildContext context) {
     ThemeData theme = Theme.of(context);
-    //final isDark = context.watch<AppThemeProvider>().isDarkMode;
+    final isDark = context.watch<AppThemeProvider>().isDarkMode;
     final List<Widget> _screens = [
       HomePage(),
       PeopleTab(),
@@ -393,13 +429,15 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: Stack(
-          fit: StackFit.loose,
+          //fit: StackFit.passthrough,
           children: [
             PageView(
               controller: _pageController,
               children: _screens,
               onPageChanged: _onPageChanged,
-              physics: const BouncingScrollPhysics(), // disable swipe if desired
+               // disable swipe if desired
+              physics: BouncingScrollPhysics(),
+              scrollBehavior: MaterialScrollBehavior(),
             ),
             Positioned(
               bottom: 18,
@@ -408,11 +446,11 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
               height: 60,
               child: Container(
                 decoration: BoxDecoration(
-                  border: Border.all(width: 1, color: theme.scaffoldBackgroundColor.withOpacity(0.3)),
+                  border: Border.all(width: 1, color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.2)),
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(40),
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaY: 8, sigmaX: 8),
                     child: Container(
@@ -450,7 +488,11 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
   }
   Widget _buildBNBItem(IconData icon, index, label) {
     final isSelected = _selectedIndex == index;
+    final theme = Theme.of(context);
+    final isDark = context.watch<AppThemeProvider>().isDarkMode;
     return AnimatedContainer(
+      alignment: Alignment.center,
+      padding: EdgeInsets.symmetric(vertical: 8, horizontal: isSelected ? 10 : 15),
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
       child: ZoomTapAnimation(
@@ -460,19 +502,22 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
           });
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 0),
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: isSelected ? Colors.teal.withOpacity(0.2) : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            color: isSelected ? theme.colorScheme.primary.withOpacity(0.2) : Colors.transparent,
             border: isSelected ? Border.all(
-              color: Colors.teal.withOpacity(0.6),
-              width: 1.5,
+              color: theme.colorScheme.primary,
+              width: 0.5,
+
             ) : null,
             boxShadow: isSelected ? [
               BoxShadow(
+
                 color: Colors.teal.withOpacity(0.2),
                 blurRadius: 8,
-                offset: const Offset(0, 2),
+                offset: const Offset(0, 5),
               ),
             ] : null,
           ),
@@ -484,7 +529,7 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
                 child: Icon(
                   icon,
                   key: ValueKey(isSelected),
-                  color: isSelected ? Colors.teal.shade700 : Colors.grey.shade600,
+                  color: isSelected ? isDark ? Colors.white: Colors.black : Colors.grey.shade600,
                   size: isSelected ? 22 : 20,
                 ),
               ),
@@ -493,7 +538,7 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 200),
                   style: TextStyle(
-                    color: Colors.teal.shade700,
+                    color:isSelected ?isDark ? Colors.white: Colors.black : Colors.grey.shade600,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),

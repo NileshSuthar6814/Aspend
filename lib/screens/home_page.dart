@@ -12,6 +12,7 @@ import '../widgets/balance_card.dart';
 import 'package:hive/hive.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
+import 'dart:async';
 //import 'chart_page.dart';
 //import 'settings_page.dart';
 
@@ -52,21 +53,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     
     _scrollController = ScrollController();
     
-    // Fixed scroll listener for FAB visibility (scroll down to show, scroll up to hide)
     _scrollController.addListener(() {
-      final direction = _scrollController.position.userScrollDirection;
-      if (direction == ScrollDirection.forward && _showFab) {
-        setState(() => _showFab = false);
-        _fabVisibilityController.forward();
-      } else if (direction == ScrollDirection.reverse && !_showFab) {
-        setState(() => _showFab = true);
-        _fabVisibilityController.reverse();
-      }
-      else if(direction == ScrollDirection.idle && !_showFab){
-        setState(() {
-          _showFab=true;
-        });
-        //_fabVisibilityController.reverse();
+      if (!_scrollController.hasClients) return;
+      final atTop = _scrollController.position.pixels <= 0;
+      final txns = context.read<TransactionProvider>().transactions;
+      final isEmpty = txns.isEmpty;
+      if (atTop || isEmpty) {
+        if (!_showFab) setState(() => _showFab = true);
+      } else {
+        if (_showFab) setState(() => _showFab = false);
       }
     });
     
@@ -98,8 +93,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
     final theme = Theme.of(context);
+    final isDark = context.watch<AppThemeProvider>().isDarkMode;
+    final useAdaptive = context.watch<AppThemeProvider>().useAdaptiveColor;
     final txns = context.watch<TransactionProvider>().transactions;
     final spends = txns.where((t) => !t.isIncome).toList()
       ..sort((a, b) => b.date.compareTo(a.date));
@@ -137,7 +133,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: isDark 
+                        colors: useAdaptive
+                          ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
+                          : isDark 
                           ? [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)]
                           : [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
                       ),
@@ -227,10 +225,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: Colors.teal.withOpacity(0.1),
+                                color: useAdaptive ? theme.colorScheme.primary.withOpacity(0.1) : Colors.teal.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color: Colors.teal.withOpacity(0.3),
+                                  color: useAdaptive ? theme.colorScheme.primary.withOpacity(0.3) : Colors.teal.withOpacity(0.3),
                                   width: 1,
                                 ),
                               ),
@@ -239,7 +237,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 style: GoogleFonts.nunito(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.teal.shade700,
+                                  color: useAdaptive ? theme.colorScheme.primary : Colors.teal.shade700,
                                 ),
                               ),
                             ),
@@ -352,13 +350,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
         ],
       ),
-      floatingActionButton: AnimatedBuilder(
-        animation: _fabVisibilityController,
-        builder: (context, child) {
-          return Transform.translate(
-            offset: Offset(0, 20 * (1 - _fabVisibilityController.value)),
-            child: Opacity(
-              opacity: _fabVisibilityController.value,
+      floatingActionButton: AnimatedSlide(
+        offset: _showFab ? Offset.zero : const Offset(0, 2),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        child: AnimatedOpacity(
+          opacity: _showFab ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 300),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -461,8 +459,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ],
               ),
             ),
-          );
-        },
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../models/transaction.dart';
 import '../providers/transaction_provider.dart';
+import '../providers/theme_provider.dart';
 
 class TransactionTile extends StatefulWidget {
   final Transaction transaction;
@@ -54,7 +55,7 @@ class _TransactionTileState extends State<TransactionTile>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final isDark = context.watch<AppThemeProvider>().isDarkMode;
     final isIncome = widget.transaction.isIncome;
     final amountText = "${isIncome ? '+' : '-'}₹${widget.transaction.amount.toStringAsFixed(2)}";
     
@@ -99,10 +100,11 @@ class _TransactionTileState extends State<TransactionTile>
                         ? [
                             Colors.grey.shade900,
                             Colors.grey.shade800,
+                            Colors.grey.shade700,
                           ]
                         : [
                             Colors.white,
-                            Colors.grey.shade50,
+                            Colors.grey.shade100,
                           ],
                   ),
                   borderRadius: BorderRadius.circular(12),

@@ -65,13 +65,18 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
     _slideController.forward();
 
     _scrollController.addListener(() {
-      final direction = _scrollController.position.userScrollDirection;
-      if (direction == ScrollDirection.forward && _showFab) {
-        setState(() => _showFab = false);
-        _fabVisibilityController.forward();
-      } else if (direction == ScrollDirection.reverse && !_showFab) {
-        setState(() => _showFab = true);
-        _fabVisibilityController.reverse();
+      if (!_scrollController.hasClients) return;
+      final people = context.read<PersonProvider>().people;
+      final isEmpty = people.isEmpty;
+      if (isEmpty) {
+        if (!_showFab) setState(() => _showFab = true);
+      } else {
+        final atTop = _scrollController.position.pixels <= 0;
+        if (atTop) {
+          if (!_showFab) setState(() => _showFab = true);
+        } else {
+          if (_showFab) setState(() => _showFab = false);
+        }
       }
     });
   }
@@ -235,297 +240,320 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
     final people = personProvider.people;
     final theme = Theme.of(context);
     final isDark = context.watch<AppThemeProvider>().isDarkMode;
+    final useAdaptive = context.watch<AppThemeProvider>().useAdaptiveColor;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          'People',
-          style: GoogleFonts.nunito(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        flexibleSpace: ClipRRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isDark 
-                    ? [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)]
-                    : [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
+      body: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 100,
+            floating: true,
+            pinned: true,
+            elevation: 1,
+            backgroundColor: Colors.transparent,
+            flexibleSpace: FlexibleSpaceBar(
+              title: Text(
+                'People',
+                style: GoogleFonts.nunito(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              background: ClipRRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: useAdaptive
+                          ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
+                          : isDark 
+                            ? [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)]
+                            : [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
+            centerTitle: true,
           ),
-        ),
-      ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: people.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(60),
+          SliverFillRemaining(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: people.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(60),
+                              ),
+                              child: Icon(
+                                Icons.people_outline,
+                                size: 60,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              "No people added yet",
+                              style: GoogleFonts.nunito(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Add people to track transactions with them",
+                              style: GoogleFonts.nunito(
+                                fontSize: 16,
+                                color: theme.colorScheme.onSurface.withOpacity(0.7),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
-                        child: Icon(
-                          Icons.people_outline,
-                          size: 60,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        "No people added yet",
-                        style: GoogleFonts.nunito(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "Add people to track transactions with them",
-                        style: GoogleFonts.nunito(
-                          fontSize: 16,
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(12),
-                  itemCount: people.length + 1, // +1 for bottom padding
-                  itemBuilder: (_, idx) {
-                    // Add bottom padding as last item
-                    if (idx == people.length) {
-                      return const SizedBox(height: 80);
-                    }
-                    
-                    final person = people[idx];
-                    final total = personProvider.totalFor(person.name);
-                    final isPositive = total >= 0;
+                      )
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(12),
+                        itemCount: people.length + 1, // +1 for bottom padding
+                        itemBuilder: (_, idx) {
+                          // Add bottom padding as last item
+                          if (idx == people.length) {
+                            return const SizedBox(height: 80);
+                          }
+                          
+                          final person = people[idx];
+                          final total = personProvider.totalFor(person.name);
+                          final isPositive = total >= 0;
 
-                    return AnimatedBuilder(
-                      animation: _fadeController,
-                      builder: (context, child) {
-                        return Transform.translate(
-                          offset: Offset(0, 20 * (1 - _fadeController.value)),
-                          child: Opacity(
-                            opacity: _fadeController.value,
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              child: ZoomTapAnimation(
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => PersonDetailPage(person: person),
-                                    ),
-                                  );
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        theme.colorScheme.surface,
-                                        theme.colorScheme.surface.withOpacity(0.8),
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: theme.colorScheme.outline.withOpacity(0.2),
-                                      width: 1,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: theme.colorScheme.shadow.withOpacity(0.1),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(20),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 60,
-                                          height: 60,
-                                          decoration: BoxDecoration(
-                                            gradient: person.photoPath != null
-                                                ? null
-                                                : LinearGradient(
-                                                    colors: [
-                                                      theme.colorScheme.primary,
-                                                      theme.colorScheme.primary.withOpacity(0.8),
-                                                    ],
-                                                  ),
-                                            color: person.photoPath != null
-                                                ? Colors.transparent
-                                                : null,
-                                            borderRadius: BorderRadius.circular(30),
-                                            border: person.photoPath != null
-                                                ? Border.all(
-                                                    color: theme.colorScheme.primary.withOpacity(0.3),
-                                                    width: 2,
-                                                  )
-                                                : null,
+                          return AnimatedBuilder(
+                            animation: _fadeController,
+                            builder: (context, child) {
+                              return Transform.translate(
+                                offset: Offset(0, 20 * (1 - _fadeController.value)),
+                                child: Opacity(
+                                  opacity: _fadeController.value,
+                                  child: Container(
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    child: ZoomTapAnimation(
+                                      onTap: () {
+                                        HapticFeedback.lightImpact();
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => PersonDetailPage(person: person),
                                           ),
-                                          child: person.photoPath != null
-                                              ? ClipRRect(
-                                                  borderRadius: BorderRadius.circular(28),
-                                                  child: Image.file(
-                                                    File(person.photoPath!),
-                                                    width: 56,
-                                                    height: 56,
-                                                    fit: BoxFit.cover,
-                                                  ),
+                                        );
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          gradient: useAdaptive
+                                              ? LinearGradient(
+                                                  colors: [
+                                                    theme.colorScheme.primaryContainer,
+                                                    theme.colorScheme.secondaryContainer,
+                                                  ],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
                                                 )
-                                              : Icon(
-                                                  Icons.person,
-                                                  color: Colors.white,
-                                                  size: 30,
+                                              : LinearGradient(
+                                                  colors: [
+                                                    theme.colorScheme.surface,
+                                                    theme.colorScheme.surface.withOpacity(0.8),
+                                                  ],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
                                                 ),
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: theme.colorScheme.outline.withOpacity(0.2),
+                                            width: 1,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: theme.colorScheme.shadow.withOpacity(0.1),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
                                         ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(20),
+                                          child: Row(
                                             children: [
-                                              Text(
-                                                person.name,
-                                                style: GoogleFonts.nunito(
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: theme.colorScheme.onSurface,
+                                              Container(
+                                                width: 60,
+                                                height: 60,
+                                                decoration: BoxDecoration(
+                                                  gradient: person.photoPath != null
+                                                      ? null
+                                                      : useAdaptive
+                                                          ? LinearGradient(
+                                                              colors: [
+                                                                theme.colorScheme.primaryContainer,
+                                                                theme.colorScheme.secondaryContainer,
+                                                              ],
+                                                              begin: Alignment.topLeft,
+                                                              end: Alignment.bottomRight,
+                                                            )
+                                                          : LinearGradient(
+                                                              colors: [
+                                                                theme.colorScheme.primary,
+                                                                theme.colorScheme.primary.withOpacity(0.8),
+                                                              ],
+                                                            ),
+                                                  color: person.photoPath != null
+                                                      ? Colors.transparent
+                                                      : null,
+                                                  borderRadius: BorderRadius.circular(30),
+                                                  border: person.photoPath != null
+                                                      ? Border.all(
+                                                          color: theme.colorScheme.primary.withOpacity(0.3),
+                                                          width: 2,
+                                                        )
+                                                      : null,
+                                                ),
+                                                child: person.photoPath != null
+                                                    ? ClipRRect(
+                                                        borderRadius: BorderRadius.circular(28),
+                                                        child: Image.file(
+                                                          File(person.photoPath!),
+                                                          width: 56,
+                                                          height: 56,
+                                                          fit: BoxFit.cover,
+                                                        ),
+                                                      )
+                                                    : Icon(
+                                                        Icons.person,
+                                                        color: useAdaptive ? theme.colorScheme.onPrimaryContainer : Colors.white,
+                                                        size: 30,
+                                                      ),
+                                              ),
+                                              const SizedBox(width: 16),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      person.name,
+                                                      style: GoogleFonts.nunito(
+                                                        fontSize: 20,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: theme.colorScheme.onSurface,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      "Tap to view transactions",
+                                                      style: GoogleFonts.nunito(
+                                                        fontSize: 14,
+                                                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                "Tap to view transactions",
-                                                style: GoogleFonts.nunito(
-                                                  fontSize: 14,
-                                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                                ),
+                                              Column(
+                                                crossAxisAlignment: CrossAxisAlignment.end,
+                                                children: [
+                                                  Text(
+                                                    '₹${total.toStringAsFixed(2)}',
+                                                    style: GoogleFonts.nunito(
+                                                      fontSize: 18,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: isPositive ? Colors.green : Colors.red,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                    decoration: BoxDecoration(
+                                                      color: isPositive 
+                                                          ? Colors.green.withOpacity(0.1)
+                                                          : Colors.red.withOpacity(0.1),
+                                                      borderRadius: BorderRadius.circular(12),
+                                                    ),
+                                                    child: Text(
+                                                      isPositive ? 'Credit' : 'Debit',
+                                                      style: GoogleFonts.nunito(
+                                                        fontSize: 12,
+                                                        fontWeight: FontWeight.w600,
+                                                        color: isPositive ? Colors.green : Colors.red,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ],
                                           ),
                                         ),
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.end,
-                                          children: [
-                                            Text(
-                                              '₹${total.toStringAsFixed(2)}',
-                                              style: GoogleFonts.nunito(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: isPositive ? Colors.green : Colors.red,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: isPositive 
-                                                    ? Colors.green.withOpacity(0.1)
-                                                    : Colors.red.withOpacity(0.1),
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                              child: Text(
-                                                isPositive ? 'Credit' : 'Debit',
-                                                style: GoogleFonts.nunito(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: isPositive ? Colors.green : Colors.red,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
-        ),
-      ),
-      floatingActionButton: AnimatedBuilder(
-        animation: _fabVisibilityController,
-        builder: (context, child) {
-          return Transform.translate(
-            offset: Offset(0, 20 * (1 - _fabVisibilityController.value)),
-            child: Opacity(
-              opacity: _fabVisibilityController.value,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(28),
-                            border: Border.all(
-                              color: theme.colorScheme.outline.withOpacity(0.2),
-                              width: 1,
-                            ),
-                          ),
-                          child: FloatingActionButton.extended(
-                            onPressed: () {
-                              _showAddPersonDialog(context);
-                              HapticFeedback.lightImpact();
+                              );
                             },
-                            backgroundColor: Colors.transparent,
-                            elevation: 0,
-                            icon: const Icon(Icons.person_add, size: 24),
-                            label: Text(
-                              'Add Person',
-                              style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 50),
-                ],
               ),
             ),
-          );
-        },
+          ),
+        ],
+      ),
+      floatingActionButton: people.isEmpty
+        ? _buildAddPersonFab(context)
+        : (_showFab ? _buildAddPersonFab(context) : null),
+    );
+  }
+
+  Widget _buildAddPersonFab(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 60),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: theme.colorScheme.outline.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: FloatingActionButton.extended(
+              onPressed: () {
+                _showAddPersonDialog(context);
+                HapticFeedback.lightImpact();
+              },
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              icon: const Icon(Icons.person_add, size: 24),
+              label: Text(
+                'Add Person',
+                style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -5,8 +5,10 @@ import '../models/theme.dart';
 class AppThemeProvider extends ChangeNotifier {
   final _settingsBox = Hive.box('settings');
   static const _themeKey = 'theme';
+  static const _adaptiveColorKey = 'adaptiveColor';
 
   AppTheme _appTheme = AppTheme.system;
+  bool _useAdaptiveColor = false;
 
   AppThemeProvider() {
     _loadTheme();
@@ -33,14 +35,23 @@ class AppThemeProvider extends ChangeNotifier {
     }
   }
 
+  bool get useAdaptiveColor => _useAdaptiveColor;
+
   void setTheme(AppTheme theme) {
     _appTheme = theme;
     _settingsBox.put(_themeKey, theme.index);
     notifyListeners();
   }
 
+  void setAdaptiveColor(bool value) {
+    _useAdaptiveColor = value;
+    _settingsBox.put(_adaptiveColorKey, value);
+    notifyListeners();
+  }
+
   void _loadTheme() {
     final index = _settingsBox.get(_themeKey, defaultValue: AppTheme.system.index);
     _appTheme = AppTheme.values[index];
+    _useAdaptiveColor = _settingsBox.get(_adaptiveColorKey, defaultValue: false);
   }
 }
