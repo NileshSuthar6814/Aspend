@@ -1,6 +1,6 @@
 name: aspends_tracker
 description: A simple yet powerful spend and income tracker app.
-version: 5.1.0+6
+version: 4.1.0+6
 
 environment:
   sdk: ">=3.2.0 <4.0.0"
@@ -13,7 +13,7 @@ dependencies:
   pdf: ^3.10.4
   printing: ^5.11.1
   hive_flutter: ^1.1.0
-  #material_color_utilities: ^0.8.0
+  material_color_utilities: ^0.8.0
   dynamic_color:
   zoom_tap_animation:
   flex_color_scheme:
@@ -32,8 +32,6 @@ dependencies:
   fluttertoast: ^8.2.12
   intl: ^0.20.2
   flutter_displaymode: ^0.6.0
-  liquid_glass_renderer: ^0.1.1-dev.9
-  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:
@@ -58,8 +56,7 @@ flutter_launcher_icons:
   android:
     generate: true
   ios: false
-  adaptive_icon_background: "#FFFFFF"
-  image_path: "assets/icons/icons8-morty-smith-150.png"
+  image_path: "assets/icons/chart-simple-horizontal.png"
 
 
 file_picker:
