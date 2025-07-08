@@ -54,10 +54,10 @@ class PersonTransactionProvider extends ChangeNotifier {
       print('Error adding person transaction: $e');
       // Fallback to direct Hive access
       try {
-        _box.add(tx);
+    _box.add(tx);
         _transactions.insert(0, tx);
         _markDirty();
-        notifyListeners();
+    notifyListeners();
       } catch (fallbackError) {
         print('Fallback error adding person transaction: $fallbackError');
       }
@@ -77,10 +77,10 @@ class PersonTransactionProvider extends ChangeNotifier {
       print('Error deleting person transaction: $e');
       // Fallback to direct Hive access
       try {
-        tx.delete();
+    tx.delete();
         _transactions.remove(tx);
         _markDirty();
-        notifyListeners();
+    notifyListeners();
       } catch (fallbackError) {
         print('Fallback error deleting person transaction: $fallbackError');
       }
@@ -89,13 +89,13 @@ class PersonTransactionProvider extends ChangeNotifier {
 
   Map<String, List<PersonTransaction>> get groupedByPerson {
     if (_cachedGroupedByPerson == null || _isDirty) {
-      final Map<String, List<PersonTransaction>> grouped = {};
-      for (var tx in transactions) {
-        if (!grouped.containsKey(tx.personName)) {
-          grouped[tx.personName] = [];
-        }
-        grouped[tx.personName]!.add(tx);
+    final Map<String, List<PersonTransaction>> grouped = {};
+    for (var tx in transactions) {
+      if (!grouped.containsKey(tx.personName)) {
+        grouped[tx.personName] = [];
       }
+      grouped[tx.personName]!.add(tx);
+    }
       _cachedGroupedByPerson = grouped;
     }
     return _cachedGroupedByPerson!;
@@ -119,11 +119,11 @@ class PersonTransactionProvider extends ChangeNotifier {
 
   Future<void> deleteAllData() async {
     try {
-      final people = _box.values.toList();
-      for (var person in people) {
-        await person.delete();
-      }
-      await _box.clear();
+    final people = _box.values.toList();
+    for (var person in people) {
+      await person.delete();
+    }
+    await _box.clear();
       _transactions.clear();
       _markDirty();
       notifyListeners();
@@ -138,7 +138,7 @@ class PersonTransactionProvider extends ChangeNotifier {
         _box.clear();
         _transactions.clear();
         _markDirty();
-        notifyListeners();
+    notifyListeners();
       } catch (fallbackError) {
         print('Fallback error deleting all person transaction data: $fallbackError');
       }

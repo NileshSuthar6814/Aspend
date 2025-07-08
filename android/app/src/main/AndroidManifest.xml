@@ -7,7 +7,15 @@
     <application
         android:label="Aspends"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:hardwareAccelerated="true"
+        android:usesCleartextTraffic="true"
+        tools:replace="android:label">
+
+        <!-- ✅ Enable Impeller Rendering -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="true" />
 
         <activity
             android:name=".MainActivity"
@@ -30,7 +38,6 @@
 
         </activity>
 
-        <!-- ✅ Move receiver here, directly under <application> -->
         <receiver
             android:name="es.antonborri.home_widget.HomeWidgetProvider"
             android:exported="true"

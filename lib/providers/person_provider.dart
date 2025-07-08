@@ -126,7 +126,7 @@ class PersonProvider with ChangeNotifier {
       // Fallback to direct Hive access
       try {
         Hive.box<PersonTransaction>('personTransactions').add(tx);
-        notifyListeners();
+    notifyListeners();
       } catch (fallbackError) {
         print('Fallback error adding person transaction: $fallbackError');
       }

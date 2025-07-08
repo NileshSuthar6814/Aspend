@@ -54,6 +54,7 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
         slivers: [
           // Enhanced App Bar
           SliverAppBar(
@@ -89,10 +90,10 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                               colors: [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)],
                             )
                           : LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                               colors: [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
-                            ),
+                      ),
                     ),
                   ),
                 ),
@@ -111,11 +112,11 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                         // Summary Cards
                         _buildSummaryCards(totalIncome, totalSpend, isDark),
                         const SizedBox(height: 20),
-
+                        
                         // Chart Tabs
                         _buildChartTabs(isDark),
                         const SizedBox(height: 12),
-
+                        
                         // Chart Content
                         SizedBox(
                           height: 300,
@@ -456,6 +457,7 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
             const SizedBox(height: 12),
             Expanded(
               child: ListView.builder(
+                physics: const NeverScrollableScrollPhysics(),
                 itemCount: categoryData.length,
                 itemBuilder: (context, index) {
                   String category = categoryData.keys.elementAt(index);
@@ -520,15 +522,15 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
       
       return SliverToBoxAdapter(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                dateKey,
-                style: GoogleFonts.nunito(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Text(
+                    dateKey,
+                    style: GoogleFonts.nunito(
                   fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white70 : Colors.black87,
                 ),
               ),
@@ -536,9 +538,9 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
             ...dayIncomes.map((tx) => TransactionTile(transaction: tx, index: 0)).toList(),
             ...dayExpenses.map((tx) => TransactionTile(transaction: tx, index: 0)).toList(),
             const SizedBox(height: 12),
-          ],
-        ),
-      );
+        ],
+      ),
+    );
     }).toList();
   }
 

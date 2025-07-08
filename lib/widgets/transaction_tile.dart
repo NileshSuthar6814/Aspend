@@ -40,7 +40,7 @@ class _TransactionTileState extends State<TransactionTile>
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
-
+    
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.1),
       end: Offset.zero,
@@ -69,21 +69,21 @@ class _TransactionTileState extends State<TransactionTile>
     return GestureDetector(
       onTapDown: (_) {
         if (!_isPressed) {
-          setState(() => _isPressed = true);
-          _animationController.forward();
+        setState(() => _isPressed = true);
+        _animationController.forward();
           HapticFeedback.selectionClick();
         }
       },
       onTapUp: (_) {
         if (_isPressed) {
-          setState(() => _isPressed = false);
-          _animationController.reverse();
+        setState(() => _isPressed = false);
+        _animationController.reverse();
         }
       },
       onTapCancel: () {
         if (_isPressed) {
-          setState(() => _isPressed = false);
-          _animationController.reverse();
+        setState(() => _isPressed = false);
+        _animationController.reverse();
         }
       },
       onTap: () {
@@ -160,8 +160,8 @@ class _TransactionTileState extends State<TransactionTile>
                           children: [
                             // Note/Category
                             Text(
-                              widget.transaction.note.isNotEmpty 
-                                  ? widget.transaction.note 
+                              widget.transaction.note.isNotEmpty
+                                  ? widget.transaction.note
                                   : widget.transaction.category,
                               style: GoogleFonts.nunito(
                                 fontSize: 14,

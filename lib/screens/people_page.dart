@@ -244,6 +244,7 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: CustomScrollView(
         controller: _scrollController,
+        physics: const BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(
             expandedHeight: 100,

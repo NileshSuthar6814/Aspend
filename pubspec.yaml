@@ -11,24 +11,25 @@ dependencies:
   provider: ^6.1.2
   hive: ^2.2.3
   pdf: ^3.10.4
+  app_links:
   printing: ^5.11.1
   hive_flutter: ^1.1.0
   material_color_utilities: ^0.11.1
   dynamic_color:
   zoom_tap_animation:
   flex_color_scheme:
-  fl_chart: ^0.63.0
+  fl_chart: ^1.0.0
   local_auth: ^2.1.7
   home_widget: ^0.8.0
-  excel: ^2.1.0
+  excel: ^4.0.6
   stylish_bottom_bar: ^1.1.1
   path_provider: ^2.1.2
   google_fonts: ^6.2.0
-  flutter_launcher_icons: ^0.13.1
-  csv: ^5.0.2
+  flutter_launcher_icons: ^0.14.4
+  csv: ^6.0.0
   file_picker:
-  permission_handler: ^11.3.0
-  share_plus: ^7.2.1
+  permission_handler: ^12.0.1
+  share_plus: ^11.0.0
   fluttertoast: ^8.2.12
   intl: ^0.20.2
   liquid_glass_renderer:

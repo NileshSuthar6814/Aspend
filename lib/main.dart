@@ -429,9 +429,11 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
       SettingsPage(),
     ];
     return Scaffold(
-      body: FadeTransition(
+      body:
+      FadeTransition(
         opacity: _fadeAnimation,
-        child: Stack(
+       child:
+      Stack(
           //fit: StackFit.passthrough,
           children: [
             PageView(

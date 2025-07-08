@@ -116,6 +116,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         animSpeedFactor: 2.0,
         child: CustomScrollView(
         controller: _scrollController,
+        physics: const BouncingScrollPhysics(),
         slivers: [
           // Enhanced App Bar with Glass Effect
           SliverAppBar(
@@ -153,7 +154,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
-                              ),
+                      ),
                     ),
                   ),
                 ),
@@ -253,7 +254,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                     color: useAdaptive ? theme.colorScheme.primary : Colors.teal.shade700,
-                                  ),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -367,7 +368,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ),
       ),
       floatingActionButton: AnimatedSlide(
-        offset: _showFab ? Offset.zero : const Offset(0, 2),
+        offset: _showFab ? Offset.zero : const Offset(0, 1),
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
         child: AnimatedOpacity(
@@ -378,7 +379,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 children: [
                   // Glass Effect Container for FABs
                   Container(
-                    margin: const EdgeInsets.only(bottom: 40),
+                    margin: const EdgeInsets.only(bottom: 60),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(28),
                       child: BackdropFilter(
