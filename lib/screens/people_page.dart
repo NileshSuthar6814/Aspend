@@ -7,9 +7,11 @@ import 'package:zoom_tap_animation/zoom_tap_animation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:ui';
 import 'dart:io';
+import '../models/person.dart';
 import '../providers/person_provider.dart';
-import '../person/person_details_page.dart';
 import '../providers/theme_provider.dart';
+import '../providers/person_transaction_provider.dart';
+import '../person/person_details_page.dart';
 
 class PeopleTab extends StatefulWidget {
   const PeopleTab({super.key});
@@ -26,7 +28,6 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
   late AnimationController _fabVisibilityController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  late Animation<double> _fabOpacity;
 
   @override
   void initState() {
@@ -57,9 +58,6 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _fabOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(parent: _fabVisibilityController, curve: Curves.easeInOut),
-    );
 
     _fadeController.forward();
     _slideController.forward();
@@ -68,15 +66,11 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
       if (!_scrollController.hasClients) return;
       final people = context.read<PersonProvider>().people;
       final isEmpty = people.isEmpty;
-      if (isEmpty) {
-        if (!_showFab) setState(() => _showFab = true);
-      } else {
-        final atTop = _scrollController.position.pixels <= 0;
-        if (atTop) {
-          if (!_showFab) setState(() => _showFab = true);
-        } else {
-          if (_showFab) setState(() => _showFab = false);
-        }
+      final shouldShowFab = isEmpty || _scrollController.position.pixels <= 0;
+      
+      // Only update state if there's an actual change
+      if (shouldShowFab != _showFab) {
+        setState(() => _showFab = shouldShowFab);
       }
     });
   }
@@ -202,7 +196,10 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.pop(context);
+              },
               child: Text(
                 'Cancel',
                 style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
@@ -212,9 +209,10 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
               onPressed: () {
                 final name = controller.text.trim();
                 if (name.isNotEmpty) {
-                  context.read<PersonProvider>().addPerson(name, photoPath: selectedPhotoPath);
-                  Navigator.pop(context);
                   HapticFeedback.lightImpact();
+                  final person = Person(name: name, photoPath: selectedPhotoPath);
+                  context.read<PersonProvider>().addPerson(person);
+                  Navigator.pop(context);
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -254,265 +252,232 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
             elevation: 1,
             backgroundColor: Colors.transparent,
             flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                'People',
-                style: GoogleFonts.nunito(
+        title: Text(
+          'People',
+          style: GoogleFonts.nunito(
                   fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
+            fontSize: 24,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
               background: ClipRRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: useAdaptive
+                  ? LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [theme.colorScheme.primary, theme.colorScheme.primaryContainer],
+                    )
+                  : isDark
+                    ? LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: useAdaptive
-                          ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
-                          : isDark 
-                            ? [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)]
-                            : [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
+                        colors: [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)],
+                      )
+                    : LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
                       ),
-                    ),
-                  ),
-                ),
               ),
             ),
+          ),
+        ),
             centerTitle: true,
+          ),
           ),
           SliverFillRemaining(
             child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: people.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 120,
-                              height: 120,
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(60),
-                              ),
-                              child: Icon(
-                                Icons.people_outline,
-                                size: 60,
-                                color: theme.colorScheme.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            Text(
-                              "No people added yet",
-                              style: GoogleFonts.nunito(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              "Add people to track transactions with them",
-                              style: GoogleFonts.nunito(
-                                fontSize: 16,
-                                color: theme.colorScheme.onSurface.withOpacity(0.7),
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: people.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(60),
                         ),
-                      )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(12),
-                        itemCount: people.length + 1, // +1 for bottom padding
-                        itemBuilder: (_, idx) {
-                          // Add bottom padding as last item
-                          if (idx == people.length) {
-                            return const SizedBox(height: 80);
-                          }
-                          
-                          final person = people[idx];
-                          final total = personProvider.totalFor(person.name);
-                          final isPositive = total >= 0;
+                        child: Icon(
+                          Icons.people_outline,
+                          size: 60,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        "No people added yet",
+                        style: GoogleFonts.nunito(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Add people to track transactions with them",
+                        style: GoogleFonts.nunito(
+                          fontSize: 16,
+                          color: theme.colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(12),
+                  itemCount: people.length + 1, // +1 for bottom padding
+                  itemBuilder: (_, idx) {
+                    // Add bottom padding as last item
+                    if (idx == people.length) {
+                      return const SizedBox(height: 80);
+                    }
+                    
+                    final person = people[idx];
+                    final total = personProvider.totalFor(person.name);
+                    final isPositive = total >= 0;
 
-                          return AnimatedBuilder(
-                            animation: _fadeController,
-                            builder: (context, child) {
-                              return Transform.translate(
-                                offset: Offset(0, 20 * (1 - _fadeController.value)),
-                                child: Opacity(
-                                  opacity: _fadeController.value,
-                                  child: Container(
-                                    margin: const EdgeInsets.only(bottom: 12),
-                                    child: ZoomTapAnimation(
-                                      onTap: () {
-                                        HapticFeedback.lightImpact();
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => PersonDetailPage(person: person),
+                    return AnimatedBuilder(
+                      animation: _fadeController,
+                      builder: (context, child) {
+                        return Transform.translate(
+                          offset: Offset(0, 20 * (1 - _fadeController.value)),
+                          child: Opacity(
+                            opacity: _fadeController.value,
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              child: ZoomTapAnimation(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => PersonDetailPage(person: person),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: isDark ? Colors.teal.shade900.withOpacity(0.1) : Colors.teal.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: isDark ? Colors.teal.shade900.withOpacity(0.3) : Colors.teal.withOpacity(0.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 60,
+                                          height: 60,
+                                          decoration: BoxDecoration(
+                                            color: person.photoPath != null
+                                                ? Colors.transparent
+                                                : Colors.teal.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(30),
+                                            border: person.photoPath != null
+                                                ? Border.all(
+                                                    color: Colors.teal.withOpacity(0.3),
+                                                    width: 1,
+                                                  )
+                                                : null,
                                           ),
-                                        );
-                                      },
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          gradient: useAdaptive
-                                              ? LinearGradient(
-                                                  colors: [
-                                                    theme.colorScheme.primaryContainer,
-                                                    theme.colorScheme.secondaryContainer,
-                                                  ],
-                                                  begin: Alignment.topLeft,
-                                                  end: Alignment.bottomRight,
+                                          child: person.photoPath != null
+                                              ? ClipRRect(
+                                                  borderRadius: BorderRadius.circular(28),
+                                                  child: Image.file(
+                                                    File(person.photoPath!),
+                                                    width: 56,
+                                                    height: 56,
+                                                    fit: BoxFit.cover,
+                                                  ),
                                                 )
-                                              : LinearGradient(
-                                                  colors: [
-                                                    theme.colorScheme.surface,
-                                                    theme.colorScheme.surface.withOpacity(0.8),
-                                                  ],
-                                                  begin: Alignment.topLeft,
-                                                  end: Alignment.bottomRight,
+                                              : Icon(
+                                                  Icons.person,
+                                                  color: Colors.teal,
+                                                  size: 30,
                                                 ),
-                                          borderRadius: BorderRadius.circular(20),
-                                          border: Border.all(
-                                            color: theme.colorScheme.outline.withOpacity(0.2),
-                                            width: 1,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: theme.colorScheme.shadow.withOpacity(0.1),
-                                              blurRadius: 10,
-                                              offset: const Offset(0, 4),
-                                            ),
-                                          ],
                                         ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(20),
-                                          child: Row(
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Container(
-                                                width: 60,
-                                                height: 60,
-                                                decoration: BoxDecoration(
-                                                  gradient: person.photoPath != null
-                                                      ? null
-                                                      : useAdaptive
-                                                          ? LinearGradient(
-                                                              colors: [
-                                                                theme.colorScheme.primaryContainer,
-                                                                theme.colorScheme.secondaryContainer,
-                                                              ],
-                                                              begin: Alignment.topLeft,
-                                                              end: Alignment.bottomRight,
-                                                            )
-                                                          : LinearGradient(
-                                                              colors: [
-                                                                theme.colorScheme.primary,
-                                                                theme.colorScheme.primary.withOpacity(0.8),
-                                                              ],
-                                                            ),
-                                                  color: person.photoPath != null
-                                                      ? Colors.transparent
-                                                      : null,
-                                                  borderRadius: BorderRadius.circular(30),
-                                                  border: person.photoPath != null
-                                                      ? Border.all(
-                                                          color: theme.colorScheme.primary.withOpacity(0.3),
-                                                          width: 2,
-                                                        )
-                                                      : null,
-                                                ),
-                                                child: person.photoPath != null
-                                                    ? ClipRRect(
-                                                        borderRadius: BorderRadius.circular(28),
-                                                        child: Image.file(
-                                                          File(person.photoPath!),
-                                                          width: 56,
-                                                          height: 56,
-                                                          fit: BoxFit.cover,
-                                                        ),
-                                                      )
-                                                    : Icon(
-                                                        Icons.person,
-                                                        color: useAdaptive ? theme.colorScheme.onPrimaryContainer : Colors.white,
-                                                        size: 30,
-                                                      ),
-                                              ),
-                                              const SizedBox(width: 16),
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      person.name,
-                                                      style: GoogleFonts.nunito(
-                                                        fontSize: 20,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: theme.colorScheme.onSurface,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 4),
-                                                    Text(
-                                                      "Tap to view transactions",
-                                                      style: GoogleFonts.nunito(
-                                                        fontSize: 14,
-                                                        color: theme.colorScheme.onSurface.withOpacity(0.7),
-                                                      ),
-                                                    ),
-                                                  ],
+                                              Text(
+                                                person.name,
+                                                style: GoogleFonts.nunito(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: theme.colorScheme.onSurface,
                                                 ),
                                               ),
-                                              Column(
-                                                crossAxisAlignment: CrossAxisAlignment.end,
-                                                children: [
-                                                  Text(
-                                                    '₹${total.toStringAsFixed(2)}',
-                                                    style: GoogleFonts.nunito(
-                                                      fontSize: 18,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: isPositive ? Colors.green : Colors.red,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 4),
-                                                  Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                                    decoration: BoxDecoration(
-                                                      color: isPositive 
-                                                          ? Colors.green.withOpacity(0.1)
-                                                          : Colors.red.withOpacity(0.1),
-                                                      borderRadius: BorderRadius.circular(12),
-                                                    ),
-                                                    child: Text(
-                                                      isPositive ? 'Credit' : 'Debit',
-                                                      style: GoogleFonts.nunito(
-                                                        fontSize: 12,
-                                                        fontWeight: FontWeight.w600,
-                                                        color: isPositive ? Colors.green : Colors.red,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                "Tap to view transactions",
+                                                style: GoogleFonts.nunito(
+                                                  fontSize: 14,
+                                                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                                                ),
                                               ),
                                             ],
                                           ),
                                         ),
-                                      ),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              '₹${total.toStringAsFixed(2)}',
+                                              style: GoogleFonts.nunito(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: isPositive ? Colors.green : Colors.red,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: isPositive 
+                                                    ? Colors.green.withOpacity(0.1)
+                                                    : Colors.red.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                isPositive ? 'Credit' : 'Debit',
+                                                style: GoogleFonts.nunito(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: isPositive ? Colors.green : Colors.red,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
-                              );
-                            },
-                          );
-                        },
-                      ),
-              ),
-            ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+        ),
+      ),
           ),
         ],
       ),
@@ -526,34 +491,34 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
     final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 60),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: theme.colorScheme.outline.withOpacity(0.2),
-                width: 1,
-              ),
-            ),
-            child: FloatingActionButton.extended(
-              onPressed: () {
-                _showAddPersonDialog(context);
-                HapticFeedback.lightImpact();
-              },
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              icon: const Icon(Icons.person_add, size: 24),
-              label: Text(
-                'Add Person',
-                style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-        ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(28),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surface.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: theme.colorScheme.outline.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: FloatingActionButton.extended(
+                            onPressed: () {
+                              _showAddPersonDialog(context);
+                              HapticFeedback.lightImpact();
+                            },
+                            backgroundColor: Colors.transparent,
+                            elevation: 0,
+                            icon: const Icon(Icons.person_add, size: 24),
+                            label: Text(
+                              'Add Person',
+                              style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ),
+                      ),
       ),
     );
   }

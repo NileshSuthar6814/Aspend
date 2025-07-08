@@ -26,7 +26,7 @@ class _TransactionTileState extends State<TransactionTile>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _slideAnimation;
+  late Animation<Offset> _slideAnimation;
   bool _isPressed = false;
 
   @override
@@ -40,9 +40,12 @@ class _TransactionTileState extends State<TransactionTile>
     _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
-    
-    _slideAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
   }
 
@@ -59,22 +62,29 @@ class _TransactionTileState extends State<TransactionTile>
     final isIncome = widget.transaction.isIncome;
     final amountText = "${isIncome ? '+' : '-'}₹${widget.transaction.amount.toStringAsFixed(2)}";
     
-    // Get category icon
+    // Get category icon and color - memoized
     final categoryIcon = _getCategoryIcon(widget.transaction.category);
     final categoryColor = _getCategoryColor(widget.transaction.category);
 
     return GestureDetector(
       onTapDown: (_) {
-        setState(() => _isPressed = true);
-        _animationController.forward();
+        if (!_isPressed) {
+          setState(() => _isPressed = true);
+          _animationController.forward();
+          HapticFeedback.selectionClick();
+        }
       },
       onTapUp: (_) {
-        setState(() => _isPressed = false);
-        _animationController.reverse();
+        if (_isPressed) {
+          setState(() => _isPressed = false);
+          _animationController.reverse();
+        }
       },
       onTapCancel: () {
-        setState(() => _isPressed = false);
-        _animationController.reverse();
+        if (_isPressed) {
+          setState(() => _isPressed = false);
+          _animationController.reverse();
+        }
       },
       onTap: () {
         HapticFeedback.lightImpact();
@@ -86,10 +96,7 @@ class _TransactionTileState extends State<TransactionTile>
           return Transform.scale(
             scale: _scaleAnimation.value,
             child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.1),
-                end: Offset.zero,
-              ).animate(_slideAnimation),
+              position: _slideAnimation,
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
@@ -153,8 +160,8 @@ class _TransactionTileState extends State<TransactionTile>
                           children: [
                             // Note/Category
                             Text(
-                              widget.transaction.note.isNotEmpty
-                                  ? widget.transaction.note
+                              widget.transaction.note.isNotEmpty 
+                                  ? widget.transaction.note 
                                   : widget.transaction.category,
                               style: GoogleFonts.nunito(
                                 fontSize: 14,
@@ -257,14 +264,14 @@ class _TransactionTileState extends State<TransactionTile>
         return Icons.directions_car;
       case 'shopping':
         return Icons.shopping_bag;
-      case 'bills':
-        return Icons.receipt;
       case 'entertainment':
         return Icons.movie;
       case 'health':
         return Icons.medical_services;
       case 'education':
         return Icons.school;
+      case 'bills':
+        return Icons.receipt;
       case 'salary':
         return Icons.work;
       case 'freelance':
@@ -273,10 +280,8 @@ class _TransactionTileState extends State<TransactionTile>
         return Icons.trending_up;
       case 'gift':
         return Icons.card_giftcard;
-      case 'refund':
-        return Icons.money_off;
       default:
-        return Icons.category;
+        return Icons.attach_money;
     }
   }
 
@@ -288,24 +293,22 @@ class _TransactionTileState extends State<TransactionTile>
         return Colors.blue;
       case 'shopping':
         return Colors.purple;
-      case 'bills':
-        return Colors.red;
       case 'entertainment':
         return Colors.pink;
       case 'health':
-        return Colors.green;
+        return Colors.red;
       case 'education':
         return Colors.indigo;
+      case 'bills':
+        return Colors.amber;
       case 'salary':
         return Colors.green;
       case 'freelance':
         return Colors.teal;
       case 'investment':
-        return Colors.amber;
+        return Colors.cyan;
       case 'gift':
-        return Colors.pink;
-      case 'refund':
-        return Colors.green;
+        return Colors.deepPurple;
       default:
         return Colors.grey;
     }
@@ -319,10 +322,14 @@ class _TransactionTileState extends State<TransactionTile>
         return Icons.account_balance;
       case 'credit card':
         return Icons.credit_card;
-      case 'digital wallet':
+      case 'debit card':
+        return Icons.payment;
+      case 'upi':
+        return Icons.phone_android;
+      case 'wallet':
         return Icons.account_balance_wallet;
       default:
-        return Icons.account_balance;
+        return Icons.account_balance_wallet;
     }
   }
 
@@ -416,8 +423,9 @@ class _TransactionTileState extends State<TransactionTile>
                     icon: const Icon(Icons.edit),
                     label: const Text("Edit"),
                     onPressed: () {
+                      HapticFeedback.lightImpact();
                       Navigator.pop(context);
-                      // TODO: Implement edit functionality
+                      _showEditTransactionDialog(context, widget.transaction);
                     },
                   ),
                 ),
@@ -431,23 +439,24 @@ class _TransactionTileState extends State<TransactionTile>
                       foregroundColor: Colors.white,
                     ),
                     onPressed: () {
-                      Navigator.pop(context);
+                      HapticFeedback.heavyImpact();
                       Provider.of<TransactionProvider>(context, listen: false)
                           .deleteTransaction(widget.transaction);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text("Transaction deleted"),
-                          backgroundColor: Colors.red,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      );
+                      Navigator.pop(context);
                     },
                   ),
                 ),
               ],
+            ),
+            TextButton(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.pop(context);
+              },
+              child: Text(
+                "Cancel",
+                style: TextStyle(color: theme.colorScheme.primary),
+              ),
             ),
           ],
         ),
@@ -483,6 +492,200 @@ class _TransactionTileState extends State<TransactionTile>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showEditTransactionDialog(BuildContext context, Transaction tx) {
+    final theme = Theme.of(context);
+    final isDark = Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
+    final _formKey = GlobalKey<FormState>();
+    final _amountController = TextEditingController(text: tx.amount.toStringAsFixed(2));
+    final _noteController = TextEditingController(text: tx.note);
+    String _category = tx.category;
+    String _account = tx.account;
+    bool _isIncome = tx.isIncome;
+
+    final List<String> incomeCategories = [
+      "Salary", "Freelance", "Investment", "Gift", "Refund", "Other"
+    ];
+    final List<String> expenseCategories = [
+      "Food", "Transport", "Shopping", "Bills", "Entertainment", "Health", "Education", "Other"
+    ];
+    final List<String> accounts = ["Cash", "Bank", "Credit Card", "Digital Wallet"];
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          // Ensure _category is always valid for the current type
+          final currentCategories = _isIncome ? incomeCategories : expenseCategories;
+          if (!currentCategories.contains(_category)) {
+            _category = currentCategories.first;
+          }
+          // Ensure _account is always valid
+          if (!accounts.contains(_account)) {
+            _account = accounts.first;
+          }
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            backgroundColor: theme.dialogBackgroundColor,
+            title: Row(
+              children: [
+                Icon(_isIncome ? Icons.add_circle : Icons.remove_circle, color: _isIncome ? Colors.green : Colors.red, size: 28),
+                const SizedBox(width: 12),
+                Text(
+                  "Edit Transaction",
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            content: Form(
+              key: _formKey,
+              child: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: _amountController,
+                        decoration: InputDecoration(
+                          labelText: "Amount",
+                          prefixText: "₹ ",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          filled: true,
+                          fillColor: theme.colorScheme.surface,
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (val) => val == null || val.isEmpty ? "Enter amount" : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _noteController,
+                        decoration: InputDecoration(
+                          labelText: "Note (Optional)",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          filled: true,
+                          fillColor: theme.colorScheme.surface,
+                        ),
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: _category,
+                        decoration: InputDecoration(
+                          labelText: "Category",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          filled: true,
+                          fillColor: theme.colorScheme.surface,
+                        ),
+                        items: currentCategories
+                            .map((e) => DropdownMenuItem(
+                                  value: e,
+                                  child: Text(e),
+                                ))
+                            .toList(),
+                        onChanged: (val) {
+                          HapticFeedback.lightImpact();
+                          setState(() {
+                            _category = val!;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: _account,
+                        decoration: InputDecoration(
+                          labelText: "Account",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          filled: true,
+                          fillColor: theme.colorScheme.surface,
+                        ),
+                        items: accounts
+                            .map((e) => DropdownMenuItem(
+                                  value: e,
+                                  child: Text(e),
+                                ))
+                            .toList(),
+                        onChanged: (val) {
+                          HapticFeedback.lightImpact();
+                          setState(() {
+                            _account = val!;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      SwitchListTile(
+                        title: Text('Is Income', style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600)),
+                        subtitle: Text(_isIncome ? 'You received money' : 'You gave money', style: GoogleFonts.nunito(fontSize: 14, color: theme.colorScheme.onSurface.withOpacity(0.7))),
+                        value: _isIncome,
+                        onChanged: (v) {
+                          HapticFeedback.lightImpact();
+                          setState(() {
+                            _isIncome = v;
+                          });
+                        },
+                        activeColor: theme.colorScheme.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.pop(context);
+                },
+                child: Text("Cancel", style: TextStyle(color: theme.colorScheme.primary)),
+              ),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.save),
+                label: const Text("Save"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  if (_formKey.currentState!.validate()) {
+                    final newTx = Transaction(
+                      amount: double.parse(_amountController.text),
+                      note: _noteController.text,
+                      category: _category,
+                      account: _account,
+                      date: tx.date,
+                      isIncome: _isIncome,
+                    );
+                    Provider.of<TransactionProvider>(context, listen: false).updateTransaction(tx, newTx);
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text("Transaction updated successfully!"),
+                        backgroundColor: Colors.blue,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
+          );
+        },
       ),
     );
   }

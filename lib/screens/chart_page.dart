@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,6 +25,11 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        HapticFeedback.selectionClick();
+      }
+    });
   }
 
   @override
@@ -32,41 +38,14 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  Map<String, List<Transaction>> _groupTransactionsByDate(
-      List<Transaction> transactions) {
-    Map<String, List<Transaction>> grouped = {};
-
-    for (var tx in transactions) {
-      String formattedDate;
-      DateTime now = DateTime.now();
-      DateTime txDate = DateTime(tx.date.year, tx.date.month, tx.date.day);
-      DateTime today = DateTime(now.year, now.month, now.day);
-      DateTime yesterday = today.subtract(const Duration(days: 1));
-
-      if (txDate == today) {
-        formattedDate = "Today";
-      } else if (txDate == yesterday) {
-        formattedDate = "Yesterday";
-      } else {
-        formattedDate = DateFormat.yMMMMd().format(tx.date);
-      }
-
-      grouped.putIfAbsent(formattedDate, () => []);
-      grouped[formattedDate]!.add(tx);
-    }
-
-    return grouped;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final transactions = Provider.of<TransactionProvider>(context).transactions;
-    final spends = transactions.where((t) => !t.isIncome).toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
-    final incomes = transactions.where((t) => t.isIncome).toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
-    final totalSpend = spends.fold(0.0, (sum, tx) => sum + tx.amount);
-    final totalIncome = incomes.fold(0.0, (sum, tx) => sum + tx.amount);
+    final transactionProvider = Provider.of<TransactionProvider>(context);
+    final transactions = transactionProvider.sortedTransactions;
+    final spends = transactionProvider.spends;
+    final incomes = transactionProvider.incomes;
+    final totalSpend = transactionProvider.totalSpend;
+    final totalIncome = transactionProvider.totalIncome;
     final hasData = totalSpend > 0 || totalIncome > 0;
     final theme = Theme.of(context);
     final isDark = context.watch<AppThemeProvider>().isDarkMode;
@@ -97,15 +76,23 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: useAdaptive
-                          ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
-                          : isDark 
-                            ? [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)]
-                            : [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
-                      ),
+                      gradient: useAdaptive
+                        ? LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [theme.colorScheme.primary, theme.colorScheme.primaryContainer],
+                          )
+                        : isDark
+                          ? LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)],
+                            )
+                          : LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
+                            ),
                     ),
                   ),
                 ),
@@ -149,7 +136,7 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
           ),
           if (hasData) ..._buildTransactionLists(spends, incomes, isDark),
           if (hasData)
-            SliverToBoxAdapter(child: SizedBox(height: 80)), // Reduced bottom spacing
+            SliverToBoxAdapter(child: SizedBox(height: 50)), // Reduced bottom spacing
         ],
       ),
     );
@@ -522,148 +509,77 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
   }
 
   List<Widget> _buildTransactionLists(List<Transaction> spends, List<Transaction> incomes, bool isDark) {
-    return [
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            "Recent Transactions",
-            style: GoogleFonts.nunito(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.black,
-            ),
-          ),
-        ),
-      ),
-      _buildTransactionsList(spends, incomes),
-    ];
-  }
-
-  Widget _buildTransactionsList(List<Transaction> spends, List<Transaction> incomes) {
-    // Combine and sort all transactions by date
-    List<Transaction> allTransactions = [...spends, ...incomes];
-    allTransactions.sort((a, b) => b.date.compareTo(a.date));
+    final allTransactions = [...spends, ...incomes];
+    final grouped = Provider.of<TransactionProvider>(context, listen: false).groupedTransactions;
     
-    final grouped = _groupTransactionsByDate(allTransactions);
-    
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          String dateKey = grouped.keys.elementAt(index);
-          List<Transaction> dayTxs = grouped[dateKey]!;
-          
-          // Separate income and expenses for this day
-          List<Transaction> dayIncomes = dayTxs.where((t) => t.isIncome).toList();
-          List<Transaction> dayExpenses = dayTxs.where((t) => !t.isIncome).toList();
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Date Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.teal.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: Colors.teal.withOpacity(0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    dateKey,
-                    style: GoogleFonts.nunito(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.teal.shade700,
-                    ),
-                  ),
+    return grouped.entries.map((entry) {
+      final dateKey = entry.key;
+      final dayTxs = entry.value;
+      final dayIncomes = dayTxs.where((t) => t.isIncome).toList();
+      final dayExpenses = dayTxs.where((t) => !t.isIncome).toList();
+      
+      return SliverToBoxAdapter(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                dateKey,
+                style: GoogleFonts.nunito(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white70 : Colors.black87,
                 ),
               ),
-              
-              // Income transactions
-              if (dayIncomes.isNotEmpty) ...[
-                _buildSectionHeader("Income", Colors.green, Icons.trending_up),
-                ...dayIncomes.map((tx) => TransactionTile(
-                  transaction: tx,
-                  index: index,
-                )).toList(),
-              ],
-              
-              // Expense transactions
-              if (dayExpenses.isNotEmpty) ...[
-                _buildSectionHeader("Expenses", Colors.red, Icons.trending_down),
-                ...dayExpenses.map((tx) => TransactionTile(
-                  transaction: tx,
-                  index: index,
-                )).toList(),
-              ],
-              
-              const SizedBox(height: 12),
-            ],
-          );
-        },
-        childCount: grouped.length,
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(String title, Color color, IconData icon) {
-    final theme = Theme.of(context);
-    final useAdaptive = context.watch<AppThemeProvider>().useAdaptiveColor;
-    final c = color;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: c, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: GoogleFonts.nunito(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: c,
             ),
-          ),
-        ],
-      ),
-    );
+            ...dayIncomes.map((tx) => TransactionTile(transaction: tx, index: 0)).toList(),
+            ...dayExpenses.map((tx) => TransactionTile(transaction: tx, index: 0)).toList(),
+            const SizedBox(height: 12),
+          ],
+        ),
+      );
+    }).toList();
   }
 
   Widget _buildEmptyState(bool isDark) {
-    return
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+    return Center(
+      child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.analytics_outlined,
-            size: 80,
-            color: Colors.grey.shade400,
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(60),
+            ),
+            child: Icon(
+              Icons.bar_chart,
+              size: 60,
+              color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Text(
-            "No Data to Analyze",
+            'No Data Available',
             style: GoogleFonts.nunito(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white70 : Colors.black87,
+              color: isDark ? Colors.white : Colors.black87,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            "Add some transactions to see your analytics",
+            'Add some transactions to see analytics',
             style: GoogleFonts.nunito(
               fontSize: 16,
-              color: isDark ? Colors.white60 : Colors.black54,
+              color: isDark ? Colors.white70 : Colors.black54,
             ),
             textAlign: TextAlign.center,
           ),
         ],
+      ),
     );
   }
 }

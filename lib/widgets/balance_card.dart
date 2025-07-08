@@ -66,8 +66,14 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
         .fold(0.0, (sum, t) => sum + t.amount);
 
     return GestureDetector(
-      onLongPress: () => _showEditBalanceDialog(context, isDark),
-      onTap: () => _showBalanceDetails(context, isDark),
+      onLongPress: () {
+        HapticFeedback.lightImpact();
+        _showEditBalanceDialog(context, isDark);
+      },
+      onTap: () {
+        HapticFeedback.selectionClick();
+        _showBalanceDetails(context, isDark);
+      },
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: FadeTransition(
@@ -75,23 +81,31 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
           child: Container(
             margin: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: useAdaptive
-                    ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
-                    : isDark
-                        ? [
+              gradient: useAdaptive
+                  ? LinearGradient(
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomRight,
+                      colors: [theme.colorScheme.primaryContainer, theme.colorScheme.primaryContainer.withOpacity(0.3)],
+                    )
+                  : isDark
+                      ? LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
                             Colors.teal.shade900,
                             Colors.teal.shade800,
                             Colors.teal.shade700,
-                          ]
-                        : [
+                          ],
+                        )
+                      : LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
                             Colors.teal.shade100,
                             Colors.teal.shade200,
                             Colors.teal.shade300,
                           ],
-              ),
+                        ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(

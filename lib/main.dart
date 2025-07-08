@@ -36,28 +36,23 @@ void main() async {
   Hive.registerAdapter(PersonAdapter());
   Hive.registerAdapter(PersonTransactionAdapter());
 
+  // Ensure all Hive boxes are opened before running the app
   try {
-    if (!Hive.isBoxOpen('transactions')) {
-      await Hive.openBox<Transaction>('transactions');
-    }
-    if (!Hive.isBoxOpen('balanceBox')) {
-      await Hive.openBox<double>('balanceBox');
-    }
-    if (!Hive.isBoxOpen('settings')) {
-      await Hive.openBox('settings');
-    }
-    if (!Hive.isBoxOpen('people')) {
-      await Hive.openBox<Person>('people');
-    }
-    if (!Hive.isBoxOpen('personTransactions')) {
-      await Hive.openBox<PersonTransaction>('personTransactions');
-    }
+    await Future.wait([
+      if (!Hive.isBoxOpen('transactions')) Hive.openBox<Transaction>('transactions'),
+      if (!Hive.isBoxOpen('balanceBox')) Hive.openBox<double>('balanceBox'),
+      if (!Hive.isBoxOpen('settings')) Hive.openBox('settings'),
+      if (!Hive.isBoxOpen('people')) Hive.openBox<Person>('people'),
+      if (!Hive.isBoxOpen('personTransactions')) Hive.openBox<PersonTransaction>('personTransactions'),
+    ]);
+    
+    print('All Hive boxes initialized successfully');
   } catch (e) {
+    print('Error initializing Hive boxes: $e');
     runApp(MaterialApp(
       home: Scaffold(
         body: Center(
-          child: Text('Failed to initialize local storage: \n\n'
-              '\u0000A$e',
+          child: Text('Failed to initialize local storage: \n\n$e',
             style: TextStyle(color: Colors.red, fontSize: 16),
             textAlign: TextAlign.center,
           ),
@@ -189,6 +184,7 @@ class MyApp extends StatelessWidget {
         );
 
         return MaterialApp(
+          scrollBehavior: MaterialScrollBehavior(),
           debugShowCheckedModeBanner: false,
           title: 'Aspends Tracker',
           themeMode: themeProvider.themeMode,
@@ -271,17 +267,21 @@ class _SplashScreenState extends State<SplashScreen>
       backgroundColor: useAdaptive ? theme.colorScheme.primary : Colors.teal,
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: useAdaptive
-              ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer, theme.colorScheme.secondary]
-              : [
-              Colors.teal.shade400,
-              Colors.teal.shade700,
-              Colors.teal.shade900,
-            ],
-          ),
+          gradient: useAdaptive
+            ? LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [theme.colorScheme.primary, theme.colorScheme.primaryContainer, theme.colorScheme.secondary],
+              )
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.teal.shade400,
+                  Colors.teal.shade700,
+                  Colors.teal.shade900,
+                ],
+              ),
         ),
         child: Center(
           child: FadeTransition(
@@ -396,23 +396,26 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
   }
 
   void _onPageChanged(int index) {
+    if (_selectedIndex != index) {
     setState(() {
       _selectedIndex = index;
     });
     HapticFeedback.selectionClick();
+    }
   }
 
   void _onItemTapped(int index) {
+    if (_selectedIndex != index) {
     setState(() {
       _selectedIndex = index;
     });
-    // HapticFeedback.lightImpact();
+    HapticFeedback.lightImpact();
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
-       // Use jumpToPage for instant switch
+    }
   }
 
   @override
@@ -496,11 +499,7 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
       child: ZoomTapAnimation(
-        onTap: () {
-          setState(() {
-            _onItemTapped(index);
-          });
-        },
+        onTap: () => _onItemTapped(index),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 0),
           alignment: Alignment.center,
@@ -510,11 +509,9 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
             border: isSelected ? Border.all(
               color: theme.colorScheme.primary,
               width: 0.5,
-
             ) : null,
             boxShadow: isSelected ? [
               BoxShadow(
-
                 color: Colors.teal.withOpacity(0.2),
                 blurRadius: 8,
                 offset: const Offset(0, 5),

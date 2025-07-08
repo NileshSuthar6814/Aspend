@@ -19,6 +19,7 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   int _currentPage = 0;
+  String _selectedTheme = 'Default';
 
   final List<IntroSlide> _slides = [
     IntroSlide(
@@ -87,12 +88,14 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
   }
 
   void _onPageChanged(int page) {
+    HapticFeedback.selectionClick();
     setState(() {
       _currentPage = page;
     });
   }
 
   void _completeIntro() async {
+    HapticFeedback.lightImpact();
     try {
       // Show loading indicator
       showDialog(
@@ -211,7 +214,10 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
               child: Padding(
                 padding: const EdgeInsets.only(top: 50, right: 20),
                 child: TextButton(
-                  onPressed: _completeIntro,
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    _completeIntro();
+                  },
                   child: Text(
                     'Skip',
                     style: GoogleFonts.nunito(
@@ -272,6 +278,7 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
                       if (_currentPage > 0)
                         TextButton(
                           onPressed: () {
+                            HapticFeedback.lightImpact();
                             _pageController.previousPage(
                               duration: const Duration(milliseconds: 300),
                               curve: Curves.easeInOut,
@@ -292,6 +299,7 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
                       // Next/Get Started button
                       ElevatedButton(
                         onPressed: () {
+                          HapticFeedback.lightImpact();
                           if (_currentPage < _slides.length - 1) {
                             _pageController.nextPage(
                               duration: const Duration(milliseconds: 300),

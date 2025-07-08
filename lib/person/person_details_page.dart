@@ -62,10 +62,11 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
       final atTop = _scrollController.position.pixels <= 0;
       final txs = context.read<PersonProvider>().transactionsFor(widget.person.name);
       final isEmpty = txs.isEmpty;
-      if (atTop || isEmpty) {
-        if (!_showFab) setState(() => _showFab = true);
-      } else {
-        if (_showFab) setState(() => _showFab = false);
+      final shouldShowFab = atTop || isEmpty;
+      
+      // Only update state if there's an actual change
+      if (shouldShowFab != _showFab) {
+        setState(() => _showFab = shouldShowFab);
       }
     });
   }
@@ -101,15 +102,23 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: Container(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: useAdaptive
-                      ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
-                      : isDark 
-                        ? [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)]
-                        : [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
-                  ),
+                  gradient: useAdaptive
+                    ? LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [theme.colorScheme.primary, theme.colorScheme.primaryContainer],
+                      )
+                    : isDark
+                      ? LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)],
+                        )
+                      : LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
+                        ),
                 ),
               ),
             ),
@@ -130,6 +139,7 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                 size: 24,
               ),
               onPressed: () {
+                HapticFeedback.heavyImpact();
                 _showDeleteConfirmation(context);
               },
             ),
@@ -171,7 +181,8 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: useAdaptive
-                        ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
+                        ? [ theme.colorScheme.surface,
+                        theme.colorScheme.surface.withOpacity(0.8),]
                         : [
                             theme.colorScheme.surface,
                             theme.colorScheme.surface.withOpacity(0.8),
@@ -399,7 +410,8 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                                           decoration: BoxDecoration(
                                             gradient: LinearGradient(
                                               colors: useAdaptive
-                                                ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
+                                                ? [ theme.colorScheme.surface,
+                                                theme.colorScheme.surface.withOpacity(0.8),]
                                                 : [
                                                     theme.colorScheme.surface,
                                                     theme.colorScheme.surface.withOpacity(0.8),
@@ -409,7 +421,7 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                                             ),
                                             borderRadius: BorderRadius.circular(16),
                                             border: Border.all(
-                                              color: theme.colorScheme.outline.withOpacity(0.2),
+                                              color: isDark ? Colors.teal.shade900.withOpacity(0.3) : Colors.teal.withOpacity(0.3),
                                               width: 1,
                                             ),
                                             boxShadow: [
@@ -430,7 +442,8 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                                                   decoration: BoxDecoration(
                                                     gradient: LinearGradient(
                                                       colors: useAdaptive
-                                                        ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
+                                                        ? [ isPositiveTx ? Colors.green : Colors.red,
+                                                        isPositiveTx ? Colors.green.withOpacity(0.8) : Colors.red.withOpacity(0.8),]
                                                         : [
                                                             isPositiveTx ? Colors.green : Colors.red,
                                                             isPositiveTx ? Colors.green.withOpacity(0.8) : Colors.red.withOpacity(0.8),
@@ -694,7 +707,10 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                     ),
                   ),
                   value: isIncome,
-                  onChanged: (v) => setSt(() => isIncome = v),
+                  onChanged: (v) {
+                    HapticFeedback.lightImpact();
+                    setSt(() => isIncome = v);
+                  },
                   activeColor: theme.colorScheme.primary,
                 ),
               ),
@@ -702,7 +718,10 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.pop(context);
+              },
               child: Text(
                 'Cancel',
                 style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600),
@@ -710,17 +729,17 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
             ),
             ElevatedButton(
               onPressed: () {
-                final amt = double.tryParse(amtCtrl.text);
-                if (amt != null && amt > 0) {
-                  final tx = PersonTransaction(
+                HapticFeedback.lightImpact();
+                if (amtCtrl.text.isNotEmpty) {
+                  final transaction = PersonTransaction(
                     personName: widget.person.name,
-                    amount: isIncome ? amt : -amt,
+                    amount: double.parse(amtCtrl.text),
                     note: noteCtrl.text,
                     date: DateTime.now(),
                   );
-                  context.read<PersonProvider>().addTransaction(tx);
+                  
+                  context.read<PersonProvider>().addTransaction(transaction);
                   Navigator.pop(context);
-                  HapticFeedback.lightImpact();
                 }
               },
               style: ElevatedButton.styleFrom(

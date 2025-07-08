@@ -9,16 +9,18 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:flutter/rendering.dart';
+import 'dart:io';
 
 import '../backup/export_csv.dart';
 import '../backup/import_csv.dart';
 import '../backup/person_backup_helper.dart';
-//import '../models/person.dart';
-//import '../models/person_transaction.dart';
+import '../models/person.dart';
 import '../models/theme.dart';
 import '../providers/person_provider.dart';
+import '../providers/person_transaction_provider.dart';
 import '../providers/transaction_provider.dart';
 import '../services/pdf_service.dart';
+import 'package:zoom_tap_animation/zoom_tap_animation.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -59,15 +61,23 @@ class _SettingsPageState extends State<SettingsPage> {
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: useAdaptive
-                          ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
-                          : isDark 
-                            ? [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)]
-                            : [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
-                      ),
+                      gradient: useAdaptive
+                        ? LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [theme.colorScheme.primary, theme.colorScheme.primaryContainer],
+                          )
+                        : isDark
+                          ? LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)],
+                            )
+                          : LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
+                            ),
                     ),
                   ),
                 ),
@@ -240,10 +250,14 @@ class _SettingsPageState extends State<SettingsPage> {
           icon: Icons.upload_file,
           title: "Export Transactions",
           subtitle: "Backup your data to CSV",
-          onTap: () {
-            DataExporter.shareBackupFile();
+          onTap: () async {
             HapticFeedback.lightImpact();
-            _showSnackBar(context, "Export completed successfully!");
+            try {
+              await DataExporter.shareBackupFile();
+              _showSnackBar(context, "Export completed successfully!");
+            } catch (e) {
+              _showSnackBar(context, "Export failed: $e");
+            }
           },
         ),
         _buildSettingsTile(
@@ -252,10 +266,13 @@ class _SettingsPageState extends State<SettingsPage> {
           subtitle: "Restore data from backup",
           onTap: () async {
             HapticFeedback.lightImpact();
-            await DataImporter.importFromJson();
-            Provider.of<TransactionProvider>(context, listen: false)
-                .loadTransactions();
-            _showSnackBar(context, "Import completed successfully!");
+            try {
+              await DataImporter.importFromJson();
+              Provider.of<TransactionProvider>(context, listen: false).loadTransactions();
+              _showSnackBar(context, "Import completed successfully!");
+            } catch (e) {
+              _showSnackBar(context, "Import failed: $e");
+            }
           },
         ),
         _buildSettingsTile(
@@ -263,11 +280,16 @@ class _SettingsPageState extends State<SettingsPage> {
           title: "Export as PDF",
           subtitle: "Generate PDF reports",
           onTap: () async {
-            final file = await PDFService.generateHomeTransactionPDF();
-            await Printing.sharePdf(
-                bytes: await file.readAsBytes(),
-                filename: 'home_transactions.pdf');
-            _showSnackBar(context, "PDF exported successfully!");
+            HapticFeedback.lightImpact();
+            try {
+              final file = await PDFService.generateHomeTransactionPDF();
+              await Printing.sharePdf(
+                  bytes: await file.readAsBytes(),
+                  filename: 'home_transactions.pdf');
+              _showSnackBar(context, "PDF exported successfully!");
+            } catch (e) {
+              _showSnackBar(context, "PDF export failed: $e");
+            }
           },
         ),
         _buildSettingsTile(
@@ -276,11 +298,15 @@ class _SettingsPageState extends State<SettingsPage> {
           subtitle: "Backup people transactions",
           onTap: () async {
             HapticFeedback.lightImpact();
-            final file = await PDFService.generatePeopleTransactionPDF();
-            await Printing.sharePdf(
-                bytes: await file.readAsBytes(),
-                filename: 'person_transactions.pdf');
-            _showSnackBar(context, "People data exported!");
+            try {
+              final file = await PDFService.generatePeopleTransactionPDF();
+              await Printing.sharePdf(
+                  bytes: await file.readAsBytes(),
+                  filename: 'person_transactions.pdf');
+              _showSnackBar(context, "People data exported!");
+            } catch (e) {
+              _showSnackBar(context, "People data export failed: $e");
+            }
           },
         ),
       ],
@@ -296,8 +322,12 @@ class _SettingsPageState extends State<SettingsPage> {
           subtitle: "Backup people and transactions",
           onTap: () async {
             HapticFeedback.lightImpact();
-            await PersonBackupHelper.exportToJsonAndShare();
-            _showSnackBar(context, "People data exported!");
+            try {
+              await PersonBackupHelper.exportToJsonAndShare();
+              _showSnackBar(context, "People data exported!");
+            } catch (e) {
+              _showSnackBar(context, "People data export failed: $e");
+            }
           },
         ),
         _buildSettingsTile(
@@ -306,8 +336,12 @@ class _SettingsPageState extends State<SettingsPage> {
           subtitle: "Restore people data from backup",
           onTap: () async {
             HapticFeedback.lightImpact();
-            await PersonBackupHelper.importFromJson();
-            _showSnackBar(context, "People data imported successfully!");
+            try {
+              await PersonBackupHelper.importFromJson();
+              _showSnackBar(context, "People data imported successfully!");
+            } catch (e) {
+              _showSnackBar(context, "People data import failed: $e");
+            }
           },
         ),
         _buildSettingsTile(
@@ -340,7 +374,7 @@ class _SettingsPageState extends State<SettingsPage> {
         _buildSettingsTile(
           icon: Icons.info_outline,
           title: "Version",
-          subtitle: "4.1.0",
+          subtitle: "5.7.6",
           onTap: null,
         ),
         _buildSettingsTile(
@@ -348,7 +382,7 @@ class _SettingsPageState extends State<SettingsPage> {
           title: "Privacy Policy",
           subtitle: "Read our privacy policy",
           onTap: () {
-            // TODO: Implement privacy policy
+            HapticFeedback.lightImpact();
             _showSnackBar(context, "Privacy policy coming soon!");
           },
         ),
@@ -357,7 +391,7 @@ class _SettingsPageState extends State<SettingsPage> {
           title: "Help & Support",
           subtitle: "Get help and contact support",
           onTap: () {
-            // TODO: Implement help section
+            HapticFeedback.lightImpact();
             _showSnackBar(context, "Help section coming soon!");
           },
         ),
@@ -452,7 +486,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _confirmDeleteAll(BuildContext context) {
-    final isDark = context.watch<AppThemeProvider>().isDarkMode;
+    final isDark = Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
     final theme = Theme.of(context);
     
     showDialog(
@@ -486,8 +520,8 @@ class _SettingsPageState extends State<SettingsPage> {
               style: TextStyle(color: theme.colorScheme.primary),
             ),
             onPressed: () {
-              Navigator.pop(context);
               HapticFeedback.lightImpact();
+              Navigator.pop(context);
             },
           ),
           ElevatedButton.icon(
@@ -505,7 +539,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 await Provider.of<TransactionProvider>(context, listen: false)
                     .deleteAllData();
                 await Provider.of<PersonProvider>(context, listen: false)
-                    .deleteAllPeopleAndTransactions();
+                    .deleteAllData();
+                await Provider.of<PersonTransactionProvider>(context, listen: false)
+                    .deleteAllData();
                 Navigator.pop(context);
                 _showSnackBar(context, "All data deleted successfully!");
               } catch (e) {
@@ -520,7 +556,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _confirmResetIntro(BuildContext context) async {
-    final isDark = context.watch<AppThemeProvider>().isDarkMode;
+    final isDark = Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
     final theme = Theme.of(context);
     
     showDialog(
@@ -554,8 +590,8 @@ class _SettingsPageState extends State<SettingsPage> {
               style: TextStyle(color: theme.colorScheme.primary),
             ),
             onPressed: () {
-              Navigator.pop(context);
               HapticFeedback.lightImpact();
+              Navigator.pop(context);
             },
           ),
           ElevatedButton.icon(
@@ -570,11 +606,14 @@ class _SettingsPageState extends State<SettingsPage> {
               try {
                 final box = await Hive.openBox<double>('balanceBox');
                 await box.clear();
+                // Reset introCompleted flag in settings box
+                final settingsBox = await Hive.openBox('settings');
+                await settingsBox.put('introCompleted', false);
                 Navigator.pop(context);
                 _showSnackBar(context, "Intro reset successfully!");
               } catch (e) {
                 Navigator.pop(context);
-                _showSnackBar(context, "Failed to reset intro. Please try again.");
+                _showSnackBar(context, "Failed to reset intro. Please try again.\n$e");
               }
             },
           ),

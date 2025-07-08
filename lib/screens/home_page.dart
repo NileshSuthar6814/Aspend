@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/rendering.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui';
 import '../models/transaction.dart';
@@ -12,9 +10,7 @@ import '../widgets/balance_card.dart';
 import 'package:hive/hive.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
-import 'dart:async';
-//import 'chart_page.dart';
-//import 'settings_page.dart';
+import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({super.key});
@@ -27,9 +23,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   late AnimationController _fabController;
   late Animation<double> _fabScale;
   late AnimationController _fabVisibilityController;
-  late Animation<double> _fabOpacity;
   late ScrollController _scrollController;
   bool _showFab = true;
+
+  // Add search state
+  String? _searchQuery;
+  List<Transaction>? _filteredTransactions;
 
   @override
   void initState() {
@@ -47,21 +46,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    _fabOpacity = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(parent: _fabVisibilityController, curve: Curves.easeInOut),
-    );
     
     _scrollController = ScrollController();
     
+    // Optimized scroll listener with debouncing
     _scrollController.addListener(() {
       if (!_scrollController.hasClients) return;
+      
       final atTop = _scrollController.position.pixels <= 0;
       final txns = context.read<TransactionProvider>().transactions;
       final isEmpty = txns.isEmpty;
-      if (atTop || isEmpty) {
-        if (!_showFab) setState(() => _showFab = true);
-      } else {
-        if (_showFab) setState(() => _showFab = false);
+      final shouldShowFab = atTop || isEmpty;
+      
+      // Only update state if there's an actual change
+      if (shouldShowFab != _showFab) {
+        setState(() => _showFab = shouldShowFab);
       }
     });
     
@@ -91,23 +90,31 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
   }
 
+  Future<void> _handleRefresh() async {
+    Provider.of<TransactionProvider>(context, listen: false).loadTransactions();
+    // Optionally, you can also reload balance or other data here
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = context.watch<AppThemeProvider>().isDarkMode;
     final useAdaptive = context.watch<AppThemeProvider>().useAdaptiveColor;
-    final txns = context.watch<TransactionProvider>().transactions;
-    final spends = txns.where((t) => !t.isIncome).toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
-    final incomes = txns.where((t) => t.isIncome).toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
-    final balance = context.watch<TransactionProvider>().totalBalance;
-    final grouped = _groupTransactionsByDate([...spends, ...incomes]);
+    final transactionProvider = context.watch<TransactionProvider>();
+    final txns = _filteredTransactions ?? transactionProvider.sortedTransactions;
+    final balance = transactionProvider.totalBalance;
+    final grouped = _groupTransactionsByDate(txns);
     final hasTransactions = txns.isNotEmpty;
     
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: CustomScrollView(
+      body: LiquidPullToRefresh(
+        onRefresh: _handleRefresh,
+        showChildOpacityTransition: false,
+        color: theme.colorScheme.primary,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        animSpeedFactor: 2.0,
+        child: CustomScrollView(
         controller: _scrollController,
         slivers: [
           // Enhanced App Bar with Glass Effect
@@ -130,15 +137,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
+                        gradient: useAdaptive
+                          ? LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: useAdaptive
-                          ? [theme.colorScheme.primary, theme.colorScheme.primaryContainer]
-                          : isDark 
-                          ? [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)]
-                          : [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
-                      ),
+                              colors: [theme.colorScheme.primary, theme.colorScheme.primaryContainer],
+                            )
+                          : isDark
+                            ? LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)],
+                              )
+                            : LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
+                              ),
                     ),
                   ),
                 ),
@@ -152,7 +167,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
                 onPressed: () {
                   HapticFeedback.lightImpact();
-                  // Navigate to analytics or show quick stats
+                    _showAnalyticsDialog(context);
                 },
               ),
               IconButton(
@@ -225,10 +240,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: useAdaptive ? theme.colorScheme.primary.withOpacity(0.1) : Colors.teal.withOpacity(0.1),
+                                  color: useAdaptive ? theme.colorScheme.primary.withOpacity(0.1) : Colors.teal.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color: useAdaptive ? theme.colorScheme.primary.withOpacity(0.3) : Colors.teal.withOpacity(0.3),
+                                    color: useAdaptive ? theme.colorScheme.primary.withOpacity(0.3) : Colors.teal.withOpacity(0.3),
                                   width: 1,
                                 ),
                               ),
@@ -237,8 +252,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 style: GoogleFonts.nunito(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: useAdaptive ? theme.colorScheme.primary : Colors.teal.shade700,
-                                ),
+                                    color: useAdaptive ? theme.colorScheme.primary : Colors.teal.shade700,
+                                  ),
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -346,9 +361,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           // Bottom padding for better readability
           SliverToBoxAdapter(
-            child: SizedBox(height: 80),
-          ),
-        ],
+              child: SizedBox(height: MediaQuery.of(context).padding.bottom + 70),
+            ),
+          ],
+        ),
       ),
       floatingActionButton: AnimatedSlide(
         offset: _showFab ? Offset.zero : const Offset(0, 2),
@@ -362,7 +378,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 children: [
                   // Glass Effect Container for FABs
                   Container(
-                    margin: const EdgeInsets.only(bottom: 16),
+                    margin: const EdgeInsets.only(bottom: 40),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(28),
                       child: BackdropFilter(
@@ -388,7 +404,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                     onTap: () {
                                       _fabController.forward().then((_) => _fabController.reverse());
                                       _showAddTransactionDialog(context, isIncome: true);
-                                      HapticFeedback.lightImpact();
+                                      HapticFeedback.heavyImpact();
                                     },
                                     child: Container(
                                       width: 56,
@@ -422,7 +438,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                     onTap: () {
                                       _fabController.forward().then((_) => _fabController.reverse());
                                       _showAddTransactionDialog(context, isIncome: false);
-                                      HapticFeedback.lightImpact();
+                                      HapticFeedback.heavyImpact();
                                     },
                                     child: Container(
                                       width: 56,
@@ -455,7 +471,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 50),
                 ],
               ),
             ),
@@ -463,46 +478,110 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
+  // Helper to group transactions by date for filtered results
+  Map<String, List<Transaction>> _groupTransactionsByDate(List<Transaction> txns) {
+    final Map<String, List<Transaction>> grouped = {};
+    for (final tx in txns) {
+      final dateKey = "${tx.date.year}-${tx.date.month.toString().padLeft(2, '0')}-${tx.date.day.toString().padLeft(2, '0')}";
+      grouped.putIfAbsent(dateKey, () => []).add(tx);
+    }
+    return grouped;
+  }
+
   void _showSearchDialog(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
-    final searchController = TextEditingController();
+    final searchController = TextEditingController(text: _searchQuery ?? '');
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
+        backgroundColor: theme.dialogBackgroundColor,
+        title: Row(
+          children: [
+            Icon(Icons.search, color: theme.colorScheme.primary),
+            const SizedBox(width: 12),
+            Text(
           "Search Transactions",
-          style: TextStyle(
+              style: GoogleFonts.nunito(
+                fontWeight: FontWeight.bold,
             color: isDark ? Colors.white : Colors.black,
-            fontWeight: FontWeight.bold,
+              ),
           ),
+          ],
         ),
         content: TextField(
           controller: searchController,
           decoration: InputDecoration(
-            hintText: "Search by note, category, or amount...",
-            prefixIcon: const Icon(Icons.search),
+            hintText: "Enter transaction note, category, or account...",
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
             ),
+            filled: true,
+            fillColor: theme.colorScheme.surface,
           ),
-          onChanged: (value) {
-            // Implement search functionality
-          },
+          style: TextStyle(color: isDark ? Colors.white : Colors.black),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Cancel"),
-          ),
-          ElevatedButton(
             onPressed: () {
-              // Implement search
+              HapticFeedback.lightImpact();
               Navigator.pop(context);
             },
-            child: Text("Search"),
+            child: Text(
+              "Cancel",
+              style: TextStyle(color: theme.colorScheme.primary),
+            ),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.search),
+            label: const Text("Search"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              final query = searchController.text.trim().toLowerCase();
+              if (query.isEmpty) {
+                setState(() {
+                  _searchQuery = null;
+                  _filteredTransactions = null;
+                });
+                Navigator.pop(context);
+                return;
+              }
+              final allTxns = Provider.of<TransactionProvider>(context, listen: false).sortedTransactions;
+              final filtered = allTxns.where((tx) =>
+                tx.note.toLowerCase().contains(query) ||
+                tx.category.toLowerCase().contains(query) ||
+                tx.account.toLowerCase().contains(query)
+              ).toList();
+              setState(() {
+                _searchQuery = query;
+                _filteredTransactions = filtered;
+              });
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(filtered.isEmpty ? "No transactions found." : "Showing results for '$query'"),
+                  backgroundColor: filtered.isEmpty ? Colors.red : Colors.blue,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
+          ),
+          if (_searchQuery != null && _searchQuery!.isNotEmpty)
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _searchQuery = null;
+                  _filteredTransactions = null;
+                });
+                Navigator.pop(context);
+              },
+              child: Text("Clear Search", style: TextStyle(color: Colors.grey)),
           ),
         ],
       ),
@@ -620,7 +699,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                     child: Text(e),
                                   ))
                               .toList(),
-                          onChanged: (val) => _category = val!,
+                          onChanged: (val) {
+                            HapticFeedback.lightImpact();
+                            _category = val!;
+                          },
                         ),
                         const SizedBox(height: 16),
                         
@@ -641,7 +723,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                     child: Text(e),
                                   ))
                               .toList(),
-                          onChanged: (val) => _account = val!,
+                          onChanged: (val) {
+                            HapticFeedback.lightImpact();
+                            _account = val!;
+                          },
                         ),
                       ],
                     ),
@@ -706,26 +791,42 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Map<String, List<Transaction>> _groupTransactionsByDate(List<Transaction> transactions) {
-    Map<String, List<Transaction>> grouped = {};
-    for (var tx in transactions) {
-      String formattedDate;
-      DateTime now = DateTime.now();
-      DateTime txDate = DateTime(tx.date.year, tx.date.month, tx.date.day);
-      DateTime today = DateTime(now.year, now.month, now.day);
-      DateTime yesterday = today.subtract(const Duration(days: 1));
-      if (txDate == today) {
-        formattedDate = "Today";
-      } else if (txDate == yesterday) {
-        formattedDate = "Yesterday";
-      } else {
-        formattedDate = DateFormat.yMMMMd().format(tx.date);
-      }
-      if (!grouped.containsKey(formattedDate)) {
-        grouped[formattedDate] = [];
-      }
-      grouped[formattedDate]!.add(tx);
-    }
-    return grouped;
+  void _showAnalyticsDialog(BuildContext context) {
+    final transactionProvider = Provider.of<TransactionProvider>(context, listen: false);
+    final totalIncome = transactionProvider.totalIncome;
+    final totalSpend = transactionProvider.totalSpend;
+    final count = transactionProvider.transactions.length;
+    final theme = Theme.of(context);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: theme.dialogBackgroundColor,
+        title: Row(
+          children: [
+            Icon(Icons.analytics, color: theme.colorScheme.primary),
+            const SizedBox(width: 12),
+            Text("Analytics", style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Total Transactions: $count", style: TextStyle(fontSize: 16)),
+            const SizedBox(height: 8),
+            Text("Total Income: ₹${totalIncome.toStringAsFixed(2)}", style: TextStyle(fontSize: 16, color: Colors.green)),
+            const SizedBox(height: 8),
+            Text("Total Expenses: ₹${totalSpend.toStringAsFixed(2)}", style: TextStyle(fontSize: 16, color: Colors.red)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Close", style: TextStyle(color: theme.colorScheme.primary)),
+          ),
+        ],
+      ),
+    );
   }
 }
