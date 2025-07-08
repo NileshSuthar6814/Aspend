@@ -9,18 +9,18 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:flutter/rendering.dart';
-import 'dart:io';
+//import 'dart:io';
 
 import '../backup/export_csv.dart';
 import '../backup/import_csv.dart';
 import '../backup/person_backup_helper.dart';
-import '../models/person.dart';
+//import '../models/person.dart';
 import '../models/theme.dart';
 import '../providers/person_provider.dart';
 import '../providers/person_transaction_provider.dart';
 import '../providers/transaction_provider.dart';
 import '../services/pdf_service.dart';
-import 'package:zoom_tap_animation/zoom_tap_animation.dart';
+//import 'package:zoom_tap_animation/zoom_tap_animation.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});

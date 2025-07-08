@@ -24,7 +24,7 @@ import 'models/transaction.dart';
 import 'providers/transaction_provider.dart';
 import 'providers/theme_provider.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
-import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
+//import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
 // 
 void main() async {

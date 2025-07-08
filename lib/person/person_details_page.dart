@@ -11,7 +11,7 @@ import '../models/person.dart';
 import '../models/person_transaction.dart';
 import '../providers/person_provider.dart';
 import '../providers/theme_provider.dart';
-import 'dart:async';
+//import 'dart:async';
 import 'package:flutter/rendering.dart';
 
 class PersonDetailPage extends StatefulWidget {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+//import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,7 +10,7 @@ import 'dart:io';
 import '../models/person.dart';
 import '../providers/person_provider.dart';
 import '../providers/theme_provider.dart';
-import '../providers/person_transaction_provider.dart';
+//import '../providers/person_transaction_provider.dart';
 import '../person/person_details_page.dart';
 
 class PeopleTab extends StatefulWidget {
@@ -244,7 +244,7 @@ class _PeopleTabState extends State<PeopleTab> with TickerProviderStateMixin {
       backgroundColor: theme.scaffoldBackgroundColor,
       body: CustomScrollView(
         controller: _scrollController,
-        physics: const BouncingScrollPhysics(),
+        physics: BouncingScrollPhysics(),
         slivers: [
           SliverAppBar(
             expandedHeight: 100,
