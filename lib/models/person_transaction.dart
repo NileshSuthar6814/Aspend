@@ -11,12 +11,15 @@ class PersonTransaction extends HiveObject {
   String note;
   @HiveField(3)
   DateTime date;
+  @HiveField(4)
+  bool isIncome;
 
   PersonTransaction({
     required this.personName,
     required this.amount,
     required this.note,
     required this.date,
+    required this.isIncome,
   });
 
   Map<String, dynamic> toJson() => {
@@ -24,6 +27,7 @@ class PersonTransaction extends HiveObject {
     'amount': amount,
     'note': note,
     'date': date.toIso8601String(),
+    'isIncome': isIncome,
   };
 
   factory PersonTransaction.fromJson(Map<String, dynamic> json) => PersonTransaction(
@@ -31,6 +35,7 @@ class PersonTransaction extends HiveObject {
     amount: json['amount'],
     note: json['note'],
     date: DateTime.parse(json['date']),
+    isIncome: json['isIncome'] ?? (json['amount'] >= 0), // Default based on amount for backward compatibility
   );
 }
 

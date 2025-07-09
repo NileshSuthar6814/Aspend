@@ -4,8 +4,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
 import '../models/person.dart';
 import '../models/person_transaction.dart';
+import '../providers/person_provider.dart';
+import '../providers/person_transaction_provider.dart';
 
 class PersonBackupHelper {
   static Future<void> exportToJsonAndShare() async {
@@ -35,7 +39,7 @@ class PersonBackupHelper {
     await Share.shareXFiles([XFile(file.path)], text: 'Aspends Tracker Backup');
   }
 
-  static Future<void> importFromJson() async {
+  static Future<void> importFromJson(BuildContext context) async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
@@ -62,6 +66,12 @@ class PersonBackupHelper {
           final tx = PersonTransaction.fromJson(txJson);
           txBox.add(tx);
         }
+      }
+      
+      // Notify providers to reload data
+      if (context.mounted) {
+        context.read<PersonProvider>().loadPeople();
+        context.read<PersonTransactionProvider>().loadTransactions();
       }
     }
   }

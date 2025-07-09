@@ -177,32 +177,32 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
               // Balance Card
               Container(
                 margin: const EdgeInsets.all(16),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: useAdaptive
-                        ? [ theme.colorScheme.surface,
-                        theme.colorScheme.surface.withOpacity(0.8),]
-                        : [
-                            theme.colorScheme.surface,
-                            theme.colorScheme.surface.withOpacity(0.8),
-                          ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: theme.colorScheme.outline.withOpacity(0.2),
-                      width: 1,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: theme.colorScheme.shadow.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
+                                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: useAdaptive
+                                  ? [ theme.colorScheme.surface,
+                                  theme.colorScheme.surface.withOpacity(0.8),]
+                                  : [
+                                      theme.colorScheme.surface,
+                                      theme.colorScheme.surface.withOpacity(0.8),
+                                    ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: theme.colorScheme.outline.withOpacity(0.2),
+                                width: 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.colorScheme.shadow.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Row(
@@ -234,7 +234,9 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                             borderRadius: BorderRadius.circular(30),
                             border: widget.person.photoPath != null
                                 ? Border.all(
-                                    color: isPositive ? Colors.green : Colors.red,
+                                    color: useAdaptive
+                                        ? (isPositive ? Colors.green : Colors.red)
+                                        : (isPositive ? Colors.green : Colors.red),
                                     width: 2,
                                   )
                                 : null,
@@ -319,7 +321,9 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        color: useAdaptive
+                            ? theme.colorScheme.primary.withOpacity(0.1)
+                            : theme.colorScheme.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -327,7 +331,9 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                         style: GoogleFonts.nunito(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.primary,
+                          color: useAdaptive
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.primary,
                         ),
                       ),
                     ),
@@ -348,13 +354,17 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                               width: 100,
                               height: 100,
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primary.withOpacity(0.1),
+                                color: useAdaptive
+                                    ? theme.colorScheme.primary.withOpacity(0.1)
+                                    : theme.colorScheme.primary.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(50),
                               ),
                               child: Icon(
                                 Icons.receipt_long_outlined,
                                 size: 50,
-                                color: theme.colorScheme.primary,
+                                color: useAdaptive
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.primary,
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -388,8 +398,8 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                           }
                           
                           final tx = txs[i];
-                          final sign = tx.amount >= 0 ? '+' : '';
-                          final isPositiveTx = tx.amount >= 0;
+                          final sign = tx.isIncome ? '+' : '-';
+                          final isPositiveTx = tx.isIncome;
                           
                           return AnimatedBuilder(
                             animation: _fadeController,
@@ -421,12 +431,18 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                                             ),
                                             borderRadius: BorderRadius.circular(16),
                                             border: Border.all(
-                                              color: isDark ? Colors.teal.shade900.withOpacity(0.3) : Colors.teal.withOpacity(0.3),
+                                              color: useAdaptive
+                                                  ? theme.colorScheme.primary.withOpacity(0.3)
+                                                  : isDark
+                                                      ? Colors.teal.shade900.withOpacity(0.3)
+                                                      : Colors.teal.withOpacity(0.3),
                                               width: 1,
                                             ),
                                             boxShadow: [
                                               BoxShadow(
-                                                color: theme.colorScheme.shadow.withOpacity(0.1),
+                                                color: useAdaptive
+                                                    ? theme.colorScheme.shadow.withOpacity(0.1)
+                                                    : theme.colorScheme.shadow.withOpacity(0.1),
                                                 blurRadius: 8,
                                                 offset: const Offset(0, 2),
                                               ),
@@ -736,6 +752,7 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                     amount: double.parse(amtCtrl.text),
                     note: noteCtrl.text,
                     date: DateTime.now(),
+                    isIncome: isIncome,
                   );
                   
                   context.read<PersonProvider>().addTransaction(transaction);

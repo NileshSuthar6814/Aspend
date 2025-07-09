@@ -93,8 +93,8 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
                           end: Alignment.bottomRight,
                           colors: [
                             Colors.teal.shade900,
+                            //Colors.teal.shade850,
                             Colors.teal.shade800,
-                            Colors.teal.shade700,
                           ],
                         )
                       : LinearGradient(
@@ -102,8 +102,8 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
                           end: Alignment.bottomRight,
                           colors: [
                             Colors.teal.shade100,
+                            //Colors.teal.shade250,
                             Colors.teal.shade200,
-                            Colors.teal.shade300,
                           ],
                         ),
               borderRadius: BorderRadius.circular(16),

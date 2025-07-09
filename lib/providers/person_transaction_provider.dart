@@ -105,7 +105,7 @@ class PersonTransactionProvider extends ChangeNotifier {
     if (_cachedTotals == null || _isDirty) {
       _cachedTotals = {};
       for (var tx in transactions) {
-        _cachedTotals![tx.personName] = (_cachedTotals![tx.personName] ?? 0.0) + tx.amount;
+        _cachedTotals![tx.personName] = (_cachedTotals![tx.personName] ?? 0.0) + (tx.isIncome ? tx.amount : -tx.amount);
       }
     }
     return _cachedTotals![name] ?? 0.0;

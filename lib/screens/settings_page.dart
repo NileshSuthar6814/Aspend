@@ -39,6 +39,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: CustomScrollView(
+        //controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         slivers: [
           // Enhanced App Bar
@@ -268,8 +269,7 @@ class _SettingsPageState extends State<SettingsPage> {
           onTap: () async {
             HapticFeedback.lightImpact();
             try {
-              await DataImporter.importFromJson();
-              Provider.of<TransactionProvider>(context, listen: false).loadTransactions();
+              await DataImporter.importFromJson(context);
               _showSnackBar(context, "Import completed successfully!");
             } catch (e) {
               _showSnackBar(context, "Import failed: $e");
@@ -338,7 +338,7 @@ class _SettingsPageState extends State<SettingsPage> {
           onTap: () async {
             HapticFeedback.lightImpact();
             try {
-              await PersonBackupHelper.importFromJson();
+              await PersonBackupHelper.importFromJson(context);
               _showSnackBar(context, "People data imported successfully!");
             } catch (e) {
               _showSnackBar(context, "People data import failed: $e");

@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hive/hive.dart';
+import 'package:provider/provider.dart';
+import '../providers/transaction_provider.dart';
 
 class DataImporter {
-  static Future<void> importFromJson() async {
+  static Future<void> importFromJson(BuildContext context) async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
@@ -40,6 +42,11 @@ class DataImporter {
         //     fontSize: 16.0
         // );
     HapticFeedback.heavyImpact();
+      }
+      
+      // Notify provider to reload data
+      if (context.mounted) {
+        context.read<TransactionProvider>().loadTransactions();
       }
     }
     else if (result == null) {

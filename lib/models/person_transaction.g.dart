@@ -21,13 +21,14 @@ class PersonTransactionAdapter extends TypeAdapter<PersonTransaction> {
       amount: fields[1] as double,
       note: fields[2] as String,
       date: fields[3] as DateTime,
+      isIncome: fields[4] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, PersonTransaction obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.personName)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class PersonTransactionAdapter extends TypeAdapter<PersonTransaction> {
       ..writeByte(2)
       ..write(obj.note)
       ..writeByte(3)
-      ..write(obj.date);
+      ..write(obj.date)
+      ..writeByte(4)
+      ..write(obj.isIncome);
   }
 
   @override

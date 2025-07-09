@@ -106,8 +106,8 @@ class _TransactionTileState extends State<TransactionTile>
                     colors: isDark
                         ? [
                             Colors.grey.shade900,
+                            //Colors.grey.shade850,
                             Colors.grey.shade800,
-                            Colors.grey.shade700,
                           ]
                         : [
                             Colors.white,

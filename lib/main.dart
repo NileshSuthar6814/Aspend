@@ -10,6 +10,7 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:dynamic_color/dynamic_color.dart'; // Add this import
 //import 'package:stylish_bottom_bar/stylish_bottom_bar.dart';
@@ -337,12 +338,12 @@ class _SplashScreenState extends State<SplashScreen>
                     SizedBox(
                       width: 40,
                       height: 40,
-                      child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white.withOpacity(0.8),
-                        ),
-                        strokeWidth: 3,
+                      child:LoadingAnimationWidget.halfTriangleDot(
+                        color: Colors.white.withOpacity(0.8),
+                        size: 40,
+
                       ),
+
                     ),
                   ],
                 ),

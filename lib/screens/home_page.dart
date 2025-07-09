@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui';
 import '../models/transaction.dart';
+import '../models/person_transaction.dart';
 import '../providers/theme_provider.dart';
 import '../providers/transaction_provider.dart';
+import '../providers/person_provider.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/balance_card.dart';
 import 'package:hive/hive.dart';
@@ -225,7 +227,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
-                  String dateKey = grouped.keys.elementAt(index);
+                  String dateKey = grouped.entries.elementAt(index).key;
                   List<Transaction> dayTxs = grouped[dateKey]!;
                   List<Transaction> dayIncomes = dayTxs.where((t) => t.isIncome).toList();
                   List<Transaction> dayExpenses = dayTxs.where((t) => !t.isIncome).toList();
@@ -766,6 +768,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       Provider.of<TransactionProvider>(context, listen: false)
                           .addTransaction(tx);
                       
+                      // Check for person names in the note and add person transactions
+                      _checkAndAddPersonTransactions(tx);
+                      
                       // Show success message
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -790,6 +795,49 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         );
       },
     );
+  }
+
+  void _checkAndAddPersonTransactions(Transaction tx) {
+    // Get all people from the person provider
+    final personProvider = Provider.of<PersonProvider>(context, listen: false);
+    final people = personProvider.people;
+    
+    // Check if any person name appears in the transaction note
+    for (final person in people) {
+      final personName = person.name.toLowerCase();
+      final note = tx.note.toLowerCase();
+      
+      // Check if person name is mentioned in the note
+      if (note.contains(personName)) {
+        // Create a person transaction
+        final personTx = PersonTransaction(
+          personName: person.name,
+          amount: tx.amount,
+          note: tx.note,
+          date: tx.date,
+          isIncome: tx.isIncome,
+        );
+        
+        // Add the person transaction
+        personProvider.addTransaction(personTx);
+        
+        // Show a subtle notification that person transaction was added
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Transaction also added to ${person.name}'s record",
+              style: const TextStyle(fontSize: 12),
+            ),
+            backgroundColor: Colors.blue,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 2),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    }
   }
 
   void _showAnalyticsDialog(BuildContext context) {

@@ -111,7 +111,7 @@ class PersonProvider with ChangeNotifier {
   }
 
   double totalFor(String name) {
-    return transactionsFor(name).fold(0.0, (sum, tx) => sum + tx.amount);
+    return transactionsFor(name).fold(0.0, (sum, tx) => sum + (tx.isIncome ? tx.amount : -tx.amount));
   }
 
   Future<void> addTransaction(PersonTransaction tx) async {
