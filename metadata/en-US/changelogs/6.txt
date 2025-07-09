@@ -1,0 +1,1 @@
+Version 5.7.0: Enhanced UI with Material You design, improved performance, and bug fixes 

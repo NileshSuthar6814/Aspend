@@ -1,0 +1,12 @@
+Aspend is a modern Flutter application that embraces Material You design principles with dynamic color theming for an immersive and personalized user experience.
+
+Key Features:
+• Material 3 (Material You) design with dynamic color theming
+• Track your income and expenses with ease
+• Beautiful charts and analytics
+• Export data to PDF and Excel formats
+• Widget support for quick access
+• Biometric authentication for security
+• Cross-platform compatibility
+
+The app provides a clean, intuitive interface for managing personal finances with modern design aesthetics that adapt to your system theme and accent colors. 

@@ -1,0 +1,26 @@
+Categories:
+  - Finance
+  - Productivity
+License: MIT
+SourceCode: https://github.com/sthrnilshaaa/aspend
+WebSite: https://github.com/sthrnilshaaa/aspend
+
+RepoType: git
+Repo: https://github.com/sthrnilshaaa/aspend
+
+Builds:
+  - versionName: '5.7.0'
+    versionCode: 6
+    commit: v5.7.0
+    subdir: .
+    sudo:
+      - apt-get update
+      - apt-get install -y openjdk-11-jdk
+      - update-alternatives --auto java
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: '5.7.0'
+CurrentVersionCode: 6 
