@@ -485,7 +485,7 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                                                           fontWeight: FontWeight.w600,
                                                           color: theme.colorScheme.onSurface,
                                                         ),
-                                                      ),
+                                                    ),
                                                       const SizedBox(height: 4),
                                                       Text(
                                                         DateFormat.yMMMd().add_jm().format(tx.date),

@@ -1,6 +1,6 @@
 Categories:
-  - Finance
-  - Productivity
+  - Finance Manager
+  - Money
 License: MIT
 SourceCode: https://github.com/sthrnilshaaa/aspend
 WebSite: https://github.com/sthrnilshaaa/aspend
@@ -12,10 +12,17 @@ Builds:
   - versionName: '5.7.0'
     versionCode: 6
     commit: v5.7.0
-    subdir: .
+    subdir: android
+    prebuild:
+      - wget https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.22.1-stable.tar.xz
+      - tar xf flutter_linux_3.22.1-stable.tar.xz -C $HOME
+      - export PATH="$HOME/flutter/bin:$PATH"
+      - yes | $HOME/flutter/bin/flutter doctor
+      - $HOME/flutter/bin/flutter pub get
+      - echo "flutter.sdk=$HOME/flutter" >> local.properties
     sudo:
       - apt-get update
-      - apt-get install -y openjdk-11-jdk
+      - apt-get install -y openjdk-17-jdk
       - update-alternatives --auto java
     gradle:
       - yes
@@ -23,4 +30,4 @@ Builds:
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 CurrentVersion: '5.7.0'
-CurrentVersionCode: 6 
+CurrentVersionCode: 6
