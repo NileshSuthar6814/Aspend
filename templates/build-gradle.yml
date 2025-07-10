@@ -1,0 +1,25 @@
+Categories:
+  - Internet
+  - Navigation
+License: GPL-3.0-or-later
+SourceCode: https://gitlab.com/APPLICATION_UPSTREAM/ExampleCom
+
+RepoType: git
+Repo: https://gitlab.com/APPLICATION_UPSTREAM/ExampleCom
+
+Builds:
+  - versionName: '1.0'
+    versionCode: 123
+    commit: v1.0
+    subdir: app
+    sudo:
+      - apt-get update
+      - apt-get install -y librsvg2-bin
+      - update-alternatives --auto java
+    gradle:
+      - yes
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: '1.0'
+CurrentVersionCode: 123 
