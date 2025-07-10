@@ -1,13 +1,13 @@
 Categories:
   - Finance
 License: MIT
-SourceCode: https://github.com/sthrnilshaaa/aspend
-IssueTracker: https://github.com/sthrnilshaaa/aspend/issues
+SourceCode: https://github.com/NileshSuthar6814/Aspend
+IssueTracker: https://github.com/NileshSuthar6814/Aspend/issues
 
 AutoName: Aspend
 
 RepoType: git
-Repo: https://github.com/sthrnilshaaa/aspend.git
+Repo: https://github.com/NileshSuthar6814/Aspend.git
 
 Builds:
   - versionName: 5.7.0
