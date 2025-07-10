@@ -1,33 +1,36 @@
 Categories:
-  - Finance Manager
   - Money
+  - Finance
 License: MIT
 SourceCode: https://github.com/sthrnilshaaa/aspend
 WebSite: https://github.com/sthrnilshaaa/aspend
+IssueTracker: https://github.com/sthrnilshaaa/aspend/issues
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: '5.7.0'
+CurrentVersionCode: 6
 
 RepoType: git
-Repo: https://github.com/sthrnilshaaa/aspend
+Repo: https://github.com/sthrnilshaaa/aspend.git
 
 Builds:
   - versionName: '5.7.0'
     versionCode: 6
     commit: v5.7.0
     subdir: android
+    sudo:
+      - apt-get update
+      - apt-get install -y openjdk-17-jdk wget tar xz-utils unzip
     prebuild:
       - wget https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.22.1-stable.tar.xz
       - tar xf flutter_linux_3.22.1-stable.tar.xz -C $HOME
       - export PATH="$HOME/flutter/bin:$PATH"
+      - $HOME/flutter/bin/flutter config --no-analytics
       - yes | $HOME/flutter/bin/flutter doctor
       - $HOME/flutter/bin/flutter pub get
+      - $HOME/flutter/bin/flutter build apk
       - echo "flutter.sdk=$HOME/flutter" >> local.properties
-    sudo:
-      - apt-get update
-      - apt-get install -y openjdk-17-jdk
-      - update-alternatives --auto java
     gradle:
       - yes
-
-AutoUpdateMode: Version
-UpdateCheckMode: Tags
-CurrentVersion: '5.7.0'
-CurrentVersionCode: 6
+    output: build/app/outputs/flutter-apk/app-release.apk
