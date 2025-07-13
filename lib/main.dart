@@ -299,7 +299,7 @@ class _SplashScreenState extends State<SplashScreen>
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(30),
                         border: Border.all(
                           color: Colors.white.withOpacity(0.3),
@@ -452,7 +452,7 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
               height: 60,
               child: Container(
                 decoration: BoxDecoration(
-                  border: Border.all(width: 1, color: isDark ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.2)),
+                  border: Border.all(width: 1, color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1)),
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: ClipRRect(
