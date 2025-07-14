@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'dart:io';
 
 import '../models/transaction.dart';
 import '../providers/transaction_provider.dart';
@@ -341,124 +342,183 @@ class _TransactionTileState extends State<TransactionTile>
 
     showModalBottomSheet(
       context: context,
-      showDragHandle: true,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (_) => Container(
-        decoration: BoxDecoration(
-          color: theme.dialogBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with icon and amount
-            Row(
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.45,
+        minChildSize: 0.35,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: theme.dialogBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: SingleChildScrollView(
+            controller: scrollController,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: categoryColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: categoryColor.withOpacity(0.3),
-                      width: 2,
+                // Header with icon and amount
+                Row(
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: categoryColor.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: categoryColor.withOpacity(0.3),
+                          width: 2,
+                        ),
+                      ),
+                      child: Icon(
+                        categoryIcon,
+                        color: categoryColor,
+                        size: 30,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.transaction.isIncome ? 'Income' : 'Expense',
+                            style: GoogleFonts.nunito(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: widget.transaction.isIncome 
+                                  ? Colors.green.shade600 
+                                  : Colors.red.shade600,
+                            ),
+                          ),
+                          Text(
+                            '₹${widget.transaction.amount.toStringAsFixed(2)}',
+                            style: GoogleFonts.nunito(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                // Show image if present
+                if (widget.transaction.imagePath != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: GestureDetector(
+                        key: ValueKey(widget.transaction.imagePath),
+                        onTap: () {
+                          if (widget.transaction.imagePath != null) {
+                            showDialog(
+                              context: context,
+                              builder: (_) => Dialog(
+                                backgroundColor: Colors.black,
+                                insetPadding: EdgeInsets.zero,
+                                child: GestureDetector(
+                                  onTap: () => Navigator.pop(context),
+                                  child: InteractiveViewer(
+                                    child: Image.file(
+                                      File(widget.transaction.imagePath!),
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.08),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Image.file(
+                              File(widget.transaction.imagePath!),
+                              fit: BoxFit.cover,
+                              height: 140,
+                              width: double.infinity,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  child: Icon(
-                    categoryIcon,
-                    color: categoryColor,
-                    size: 30,
-                  ),
+                // Details
+                _buildDetailRow("Note", widget.transaction.note.isNotEmpty ? widget.transaction.note : "—", textColor),
+                _buildDetailRow("Category", widget.transaction.category, textColor),
+                _buildDetailRow("Account", widget.transaction.account, textColor),
+                _buildDetailRow("Date", DateFormat.yMMMMEEEEd().format(widget.transaction.date), textColor),
+                _buildDetailRow("Time", DateFormat.jm().format(widget.transaction.date), textColor),
+                
+                const SizedBox(height: 24),
+                
+                // Action buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.edit),
+                        label: const Text("Edit"),
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.pop(context);
+                          _showEditTransactionDialog(context, widget.transaction);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.delete),
+                        label: const Text("Delete"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () {
+                          HapticFeedback.heavyImpact();
+                          Provider.of<TransactionProvider>(context, listen: false)
+                              .deleteTransaction(widget.transaction);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.transaction.isIncome ? 'Income' : 'Expense',
-                        style: GoogleFonts.nunito(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: widget.transaction.isIncome 
-                              ? Colors.green.shade600 
-                              : Colors.red.shade600,
-                        ),
-                      ),
-                      Text(
-                        '₹${widget.transaction.amount.toStringAsFixed(2)}',
-                        style: GoogleFonts.nunito(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
-                        ),
-                      ),
-                    ],
+                TextButton(
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    Navigator.pop(context);
+                  },
+                  child: Text(
+                    "Cancel",
+                    style: TextStyle(color: theme.colorScheme.primary),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
-            
-            // Details
-            _buildDetailRow("Note", widget.transaction.note.isNotEmpty ? widget.transaction.note : "—", textColor),
-            _buildDetailRow("Category", widget.transaction.category, textColor),
-            _buildDetailRow("Account", widget.transaction.account, textColor),
-            _buildDetailRow("Date", DateFormat.yMMMMEEEEd().format(widget.transaction.date), textColor),
-            _buildDetailRow("Time", DateFormat.jm().format(widget.transaction.date), textColor),
-            
-            const SizedBox(height: 24),
-            
-            // Action buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.edit),
-                    label: const Text("Edit"),
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.pop(context);
-                      _showEditTransactionDialog(context, widget.transaction);
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.delete),
-                    label: const Text("Delete"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                    ),
-                    onPressed: () {
-                      HapticFeedback.heavyImpact();
-                      Provider.of<TransactionProvider>(context, listen: false)
-                          .deleteTransaction(widget.transaction);
-                      Navigator.pop(context);
-                    },
-                  ),
-                ),
-              ],
-            ),
-            TextButton(
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                Navigator.pop(context);
-              },
-              child: Text(
-                "Cancel",
-                style: TextStyle(color: theme.colorScheme.primary),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

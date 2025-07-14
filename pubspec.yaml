@@ -34,7 +34,7 @@ dependencies:
   fluttertoast: ^8.2.12
   intl: ^0.20.2
   liquid_glass_renderer:
-  image_picker:
+  image_picker: ^1.1.2
   flutter_displaymode: ^0.6.0
   liquid_pull_to_refresh: ^3.0.1
 

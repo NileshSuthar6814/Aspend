@@ -22,6 +22,9 @@ class Transaction extends HiveObject {
   @HiveField(5)
   bool isIncome;
 
+  @HiveField(6)
+  String? imagePath;
+
   Transaction({
     required this.amount,
     required this.note,
@@ -29,6 +32,6 @@ class Transaction extends HiveObject {
     required this.account,
     required this.date,
     required this.isIncome,
-
+    this.imagePath,
   });
 }
