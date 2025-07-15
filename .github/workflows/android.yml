@@ -1,13 +1,17 @@
 name: Flutter Android Release Build
 
 on:
-  workflow_dispatch:  # allows manual trigger
+  workflow_dispatch:  # Allows manual trigger
   push:
     branches:
-      - main  # or your main development branch
+      - main  # Trigger only on pushes to main
+
+permissions:
+  contents: write  # Required to create GitHub Release and upload assets
 
 jobs:
   build:
+    name: Build and Release Split APKs
     runs-on: ubuntu-latest
 
     steps:
@@ -17,23 +21,28 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.32.4'  # ⚠️ Set your Flutter version here
+          flutter-version: '3.32.4'  # Set your Flutter version
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build release APK
+      - name: Build APKs with ABI splits
         run: flutter build apk --split-per-abi
 
-      - name: Upload APK artifact
+      - name: Upload APKs to GitHub Actions artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: split-apks
+          path: build/app/outputs/flutter-apk/
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release and upload APKs
         uses: softprops/action-gh-release@v2
         with:
-          files: build/app/outputs/flutter-apk/app-release.apk
+          tag_name: v6 # Change version tag as needed
+          name: Release v6
+          files: |
+            build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+            build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
+            build/app/outputs/flutter-apk/app-x86_64-release.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
