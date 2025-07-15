@@ -62,7 +62,7 @@ flutter_launcher_icons:
   android:
     generate: true
   ios: false
-  image_path: "assets/icons/exchange.png"
+  image_path: "assets/icons/ex.png"
 
 
 file_picker:
