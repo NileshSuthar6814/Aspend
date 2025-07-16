@@ -78,9 +78,6 @@ class _PeopleTabState extends State<PeopleTab> {
                   final ImagePicker picker = ImagePicker();
                   final XFile? image = await picker.pickImage(
                     source: ImageSource.gallery,
-                    maxWidth: 300,
-                    maxHeight: 300,
-                    imageQuality: 80,
                   );
 
                   if (image != null) {
@@ -163,19 +160,22 @@ class _PeopleTabState extends State<PeopleTab> {
             ],
           ),
           actions: [
-            TextButton(
-              onPressed: () {
+            ZoomTapAnimation(
+              onTap: () {
                 HapticFeedback.lightImpact();
                 Navigator.pop(context);
               },
+              child: TextButton(
+                onPressed: null,
               child: Text(
                 'Cancel',
                 style: GoogleFonts.nunito(
                     fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
-            ElevatedButton(
-              onPressed: () {
+            ),
+            ZoomTapAnimation(
+              onTap: () {
                 final name = controller.text.trim();
                 if (name.isNotEmpty) {
                   HapticFeedback.lightImpact();
@@ -185,6 +185,8 @@ class _PeopleTabState extends State<PeopleTab> {
                   Navigator.pop(context);
                 }
               },
+              child: ElevatedButton(
+                onPressed: null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: theme.colorScheme.onPrimary,
@@ -197,6 +199,7 @@ class _PeopleTabState extends State<PeopleTab> {
                 'Add Person',
                 style: GoogleFonts.nunito(
                     fontSize: 16, fontWeight: FontWeight.w600),
+                ),
               ),
             ),
           ],
@@ -477,7 +480,12 @@ class _PeopleTabState extends State<PeopleTab> {
 
   Widget _buildAddPersonFab(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
+    return ZoomTapAnimation(
+      onTap: () {
+        _showAddPersonDialog(context);
+        HapticFeedback.lightImpact();
+      },
+      child: Container(
       margin: const EdgeInsets.only(bottom: 60),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
@@ -493,10 +501,7 @@ class _PeopleTabState extends State<PeopleTab> {
               ),
             ),
             child: FloatingActionButton.extended(
-              onPressed: () {
-                _showAddPersonDialog(context);
-                HapticFeedback.lightImpact();
-              },
+                onPressed: null,
               backgroundColor: Colors.transparent,
               elevation: 0,
               icon: const Icon(Icons.person_add, size: 24),
@@ -504,6 +509,7 @@ class _PeopleTabState extends State<PeopleTab> {
                 'Add Person',
                 style: GoogleFonts.nunito(
                     fontSize: 16, fontWeight: FontWeight.w600),
+                ),
               ),
             ),
           ),

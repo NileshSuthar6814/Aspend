@@ -16,6 +16,7 @@ class DataImporter {
       allowedExtensions: ['json'],
     );
 
+    try {
     if (result != null && result.files.single.path != null) {
       final file = File(result.files.single.path!);
       final content = await file.readAsString();
@@ -30,38 +31,40 @@ class DataImporter {
           account: item['account'],
           date: DateTime.parse(item['date']),
           isIncome: item['isIncome'],
+            imagePaths: (item['imagePaths'] as List?)?.map((e) => e.toString()).toList(),
         );
         box.add(tx);
-        // Fluttertoast.showToast(
-        //     msg: "No File Selected",
-        //     toastLength: Toast.LENGTH_SHORT,
-        //     gravity: ToastGravity.CENTER,
-        //     timeInSecForIosWeb: 1,
-        //     backgroundColor: Colors.red,
-        //     textColor: Colors.white,
-        //     fontSize: 16.0
-        // );
     HapticFeedback.heavyImpact();
       }
-      
       // Notify provider to reload data
       if (context.mounted) {
         context.read<TransactionProvider>().loadTransactions();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Import completed successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No file selected.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
       }
-    }
-    else if (result == null) {
-      (
-       Fluttertoast.showToast(
-           msg: "No File Selected",
-           toastLength: Toast.LENGTH_SHORT,
-           gravity: ToastGravity.CENTER,
-           timeInSecForIosWeb: 1,
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Import failed: $e'),
            backgroundColor: Colors.red,
-           textColor: Colors.white,
-           fontSize: 16.0
        ),
-       HapticFeedback.heavyImpact(),
        );
+      }
      }
   }
 }

@@ -23,7 +23,7 @@ class TransactionAdapter extends TypeAdapter<Transaction> {
       account: fields[3] as String,
       date: fields[4] as DateTime,
       isIncome: fields[5] as bool,
-      imagePath: fields[6] as String?,
+      imagePaths: (fields[6] as List?)?.cast<String>(),
     );
   }
 
@@ -44,7 +44,7 @@ class TransactionAdapter extends TypeAdapter<Transaction> {
       ..writeByte(5)
       ..write(obj.isIncome)
       ..writeByte(6)
-      ..write(obj.imagePath);
+      ..write(obj.imagePaths);
   }
 
   @override

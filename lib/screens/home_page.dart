@@ -233,6 +233,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   List<Transaction> dayTxs = grouped[dateKey]!;
                   List<Transaction> dayIncomes = dayTxs.where((t) => t.isIncome).toList();
                   List<Transaction> dayExpenses = dayTxs.where((t) => !t.isIncome).toList();
+                  int transactionIndex = 0;
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -322,8 +323,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ],
                         ),
                       ),
-                      ...dayIncomes.map((tx) => TransactionTile(transaction: tx, index: index)).toList(),
-                      ...dayExpenses.map((tx) => TransactionTile(transaction: tx, index: index)).toList(),
+                      ...dayIncomes.map((tx) => TransactionTile(transaction: tx, index: transactionIndex++)).toList(),
+                      ...dayExpenses.map((tx) => TransactionTile(transaction: tx, index: transactionIndex++)).toList(),
                       const SizedBox(height: 12),
                     ],
                   );
@@ -371,19 +372,26 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ],
         ),
       ),
-      floatingActionButton: AnimatedSlide(
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
+        child: AnimatedSlide(
         offset: _showFab ? Offset.zero : const Offset(0, 1),
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
         child: AnimatedOpacity(
           opacity: _showFab ? 1.0 : 0.0,
           duration: const Duration(milliseconds: 300),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  // Glass Effect Container for FABs
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 60),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(28),
                       child: BackdropFilter(
@@ -403,14 +411,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 // Income FAB
-                                ScaleTransition(
-                                  scale: _fabScale,
-                                  child: ZoomTapAnimation(
+                          ZoomTapAnimation(
                                     onTap: () {
                                       _fabController.forward().then((_) => _fabController.reverse());
                                       _showAddTransactionDialog(context, isIncome: true);
                                       HapticFeedback.heavyImpact();
                                     },
+                            child: ScaleTransition(
+                              scale: _fabScale,
                                     child: Container(
                                       width: 56,
                                       height: 56,
@@ -437,14 +445,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 ),
                                 const SizedBox(width: 12),
                                 // Expense FAB
-                                ScaleTransition(
-                                  scale: _fabScale,
-                                  child: ZoomTapAnimation(
+                          ZoomTapAnimation(
                                     onTap: () {
                                       _fabController.forward().then((_) => _fabController.reverse());
                                       _showAddTransactionDialog(context, isIncome: false);
                                       HapticFeedback.heavyImpact();
                                     },
+                            child: ScaleTransition(
+                              scale: _fabScale,
                                     child: Container(
                                       width: 56,
                                       height: 56,
@@ -476,7 +484,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-                ],
               ),
             ),
       ),
@@ -600,9 +607,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     String _category = isIncome ? "Salary" : "Food";
     String _account = "Cash";
     bool _isIncome = isIncome;
-    String? _imagePath;
+    List<String> _imagePaths = [];
     final theme = Theme.of(context);
     final isDark = Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
+    final overlayKey = GlobalKey<SuccessOverlayState>();
+    Transaction? _lastAddedTx;
 
     // Predefined categories
     final List<String> incomeCategories = [
@@ -624,463 +633,369 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           scale: anim1.value,
           child: Opacity(
             opacity: anim1.value,
-            child: AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              backgroundColor: theme.dialogBackgroundColor,
-              title: Row(
-                children: [
-                  Icon(
-                    isIncome ? Icons.add_circle : Icons.remove_circle,
-                    color: isIncome ? Colors.green : Colors.red,
-                    size: 28,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * 0.97,
+                  maxHeight: MediaQuery.of(context).size.height * 0.8,
+                  minWidth: 280,
+                ),
+                child: AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    isIncome ? "Add Income" : "Add Expense",
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              content: Form(
-                key: _formKey,
-                                child: SizedBox(
-                  width: double.maxFinite,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Amount Field
-                        TextFormField(
-                          controller: _amountController,
-                          decoration: InputDecoration(
-                            labelText: "Amount",
-                            prefixText: "₹ ",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            filled: true,
-                            fillColor: theme.colorScheme.surface,
-                          ),
-                          keyboardType: TextInputType.number,
-                          validator: (val) => val == null || val.isEmpty
-                              ? "Enter amount"
-                              : null,
+                  backgroundColor: theme.dialogBackgroundColor,
+                  title: Row(
+                    children: [
+                      Icon(
+                        isIncome ? Icons.add_circle : Icons.remove_circle,
+                        color: isIncome ? Colors.green : Colors.red,
+                        size: 28,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        isIncome ? "Add Income" : "Add Expense",
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(height: 16),
-                        // Image Picker
-                        StatefulBuilder(
-                          builder: (context, setState) {
-                            return Column(
-                              children: [
-                                AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 300),
-                                  child: _imagePath == null
-                                      ? GestureDetector(
-                                          key: const ValueKey('add'),
-                                          onTap: () async {
-                                            final ImagePicker picker = ImagePicker();
-                                            final XFile? image = await picker.pickImage(
-                                              source: ImageSource.gallery,
-                                              maxWidth: 800,
-                                              maxHeight: 800,
-                                              imageQuality: 80,
-                                            );
-                                            if (image != null) {
-                                              setState(() {
-                                                _imagePath = image.path;
-                                              });
-                                            }
-                                          },
-                                          child: Container(
-                                            width: 170,
-                                            height: 32,
-                                            decoration: BoxDecoration(
-                                              color: theme.colorScheme.surface,
-                                              borderRadius: BorderRadius.circular(20),
-                                              border: Border.all(
-                                                color: theme.colorScheme.primary.withOpacity(0.3),
-                                                width: 1,
-                                              ),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black.withOpacity(0.04),
-                                                  blurRadius: 4,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ],
-                                            ),
-                                            child: Row(
-                                              mainAxisAlignment: MainAxisAlignment.center,
-                                              children: [
-                                                Icon(Icons.camera_alt_outlined, color: theme.colorScheme.primary, size: 18),
-                                                const SizedBox(width: 6),
-                                                Text("Add Image", style: TextStyle(fontSize: 12, color: theme.colorScheme.primary)),
-                                              ],
-                                            ),
-                                          ),
-                                        )
-                                      : Stack(
-                                          key: const ValueKey('preview'),
-                                          alignment: Alignment.topRight,
-                                          children: [
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(16),
-                                              child: Image.file(
-                                                File(_imagePath!),
-                                                fit: BoxFit.cover,
-                                                width: 80,
-                                                height: 80,
-                                              ),
-                                            ),
-                                            Positioned(
-                                              top: 2,
-                                              right: 2,
-                                              child: GestureDetector(
-                                                onTap: () {
-                                                  setState(() {
-                                                    _imagePath = null;
-                                                  });
-                                                },
-                                                child: Container(
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.black.withOpacity(0.6),
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  padding: const EdgeInsets.all(2),
-                                                  child: const Icon(Icons.close, color: Colors.white, size: 16),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                      ),
+                    ],
+                  ),
+                  content: Form(
+                    key: _formKey,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => FocusScope.of(context).unfocus(),
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Amount Field
+                            TextFormField(
+                              controller: _amountController,
+                              decoration: InputDecoration(
+                                labelText: "Amount",
+                                prefixText: "₹ ",
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                const SizedBox(height: 12),
-                              ],
-                            );
-                          },
-                        ),
-                        // Note Field
-                        TextFormField(
-                          controller: _noteController,
-                          decoration: InputDecoration(
-                            labelText: "Note (Optional)",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                                filled: true,
+                                fillColor: theme.colorScheme.surface,
+                              ),
+                              keyboardType: TextInputType.number,
+                              validator: (val) => val == null || val.isEmpty
+                                  ? "Enter amount"
+                                  : null,
                             ),
-                            filled: true,
-                            fillColor: theme.colorScheme.surface,
-                          ),
-                          maxLines: 2,
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        // Category Dropdown
-                        DropdownButtonFormField<String>(
-                          value: _category,
-                          decoration: InputDecoration(
-                            labelText: "Category",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                            const SizedBox(height: 16),
+                                // Image Picker
+                                StatefulBuilder(
+                                  builder: (context, setState) {
+                                    return Column(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          height: 70,
+                                          child: ListView.separated(
+                                            scrollDirection: Axis.horizontal,
+                                            itemCount: _imagePaths.length + 1,
+                                            separatorBuilder: (_, __) => const SizedBox(width: 12),
+                                            itemBuilder: (context, idx) {
+                                              if (idx < _imagePaths.length) {
+                                                final path = _imagePaths[idx];
+                                                return Stack(
+                                                  alignment: Alignment.topRight,
+                                                  children: [
+                                                    GestureDetector(
+                                                      onTap: () {
+                                                        showDialog(
+                                                          context: context,
+                                                          builder: (_) => Dialog(
+                                                            backgroundColor: Colors.black,
+                                                            insetPadding: EdgeInsets.zero,
+                                                            child: InteractiveViewer(
+                                                              child: Image.file(
+                                                                File(path),
+                                                                fit: BoxFit.contain,
+                                                                filterQuality: FilterQuality.high,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        );
+                                                      },
+                                                      child: ClipRRect(
+                                                        borderRadius: BorderRadius.circular(16),
+                                                        child: Container(
+                                                          decoration: BoxDecoration(
+                                                            border: Border.all(color: Colors.grey.withOpacity(0.18), width: 1),
+                                                            boxShadow: [
+                                                              BoxShadow(
+                                                                color: Colors.black.withOpacity(0.08),
+                                                                blurRadius: 8,
+                                                                offset: const Offset(0, 4),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          child: Image.file(
+                                                            File(path),
+                                                            fit: BoxFit.cover,
+                                                            width: 80,
+                                                            height: 80,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Positioned(
+                                                      top: 2,
+                                                      right: 2,
+                                                      child: Row(
+                                                        children: [
+                                                          GestureDetector(
+                                                            onTap: () async {
+                                                              final ImagePicker picker = ImagePicker();
+                                                              final XFile? image = await picker.pickImage(
+                                                                source: ImageSource.gallery
+                                                              );
+                                                              if (image != null) {
+                                                                setState(() {
+                                                                  _imagePaths[idx] = image.path;
+                                                                });
+                                                              }
+                                                            },
+                                                            child: Container(
+                                                              decoration: BoxDecoration(
+                                                                color: Colors.black.withOpacity(0.6),
+                                                                shape: BoxShape.circle,
+                                                              ),
+                                                              padding: const EdgeInsets.all(2),
+                                                              child: const Icon(Icons.edit, color: Colors.white, size: 16),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(width: 4),
+                                                          GestureDetector(
+                                                            onTap: () {
+                                                              setState(() {
+                                                                _imagePaths.removeAt(idx);
+                                                              });
+                                                            },
+                                                            child: Container(
+                                                              decoration: BoxDecoration(
+                                                                color: Colors.black.withOpacity(0.6),
+                                                                shape: BoxShape.circle,
+                                                              ),
+                                                              padding: const EdgeInsets.all(2),
+                                                              child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                );
+                                              } else {
+                                                // Add Image button
+                                                return GestureDetector(
+                                                  onTap: () async {
+                                                    final ImagePicker picker = ImagePicker();
+                                                    final XFile? image = await picker.pickImage(
+                                                      source: ImageSource.gallery
+                                                    );
+                                                    if (image != null) {
+                                                      setState(() {
+                                                        _imagePaths.add(image.path);
+                                                      });
+                                                    }
+                                                  },
+                                                  child: Container(
+                                                    width: 56,
+                                                    height: 32,
+                                                    decoration: BoxDecoration(
+                                                      color: theme.colorScheme.surface,
+                                                      borderRadius: BorderRadius.circular(20),
+                                                      border: Border.all(
+                                                        color: theme.colorScheme.primary.withOpacity(0.3),
+                                                        width: 1,
+                                                      ),
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: Colors.black.withOpacity(0.04),
+                                                          blurRadius: 4,
+                                                          offset: const Offset(0, 2),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisAlignment: MainAxisAlignment.center,
+                                                      children: [
+                                                        Icon(Icons.camera_alt_outlined, color: theme.colorScheme.primary, size: 18),
+                                                        const SizedBox(width: 6),
+                                                        Text("Add Image", style: TextStyle(fontSize: 12, color: theme.colorScheme.primary)),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                      ],
+                                    );
+                                  },
+                                ),
+                            // Note Field
+                            TextFormField(
+                              controller: _noteController,
+                              decoration: InputDecoration(
+                                labelText: "Note (Optional)",
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                filled: true,
+                                fillColor: theme.colorScheme.surface,
+                              ),
+                              maxLines: 2,
                             ),
-                            filled: true,
-                            fillColor: theme.colorScheme.surface,
-                          ),
-                          items: (isIncome ? incomeCategories : expenseCategories)
-                              .map((e) => DropdownMenuItem(
-                                    value: e,
-                                    child: Text(e),
-                                  ))
-                              .toList(),
-                          onChanged: (val) {
-                            HapticFeedback.lightImpact();
-                            _category = val!;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        // Account Dropdown
-                        DropdownButtonFormField<String>(
-                          value: _account,
-                          decoration: InputDecoration(
-                            labelText: "Account",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
+                            const SizedBox(height: 16),
+                            
+                            // Category Dropdown
+                            DropdownButtonFormField<String>(
+                              value: _category,
+                              decoration: InputDecoration(
+                                labelText: "Category",
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                filled: true,
+                                fillColor: theme.colorScheme.surface,
+                              ),
+                              items: (isIncome ? incomeCategories : expenseCategories)
+                                  .map((e) => DropdownMenuItem(
+                                        value: e,
+                                        child: Text(e),
+                                      ))
+                                  .toList(),
+                              onChanged: (val) {
+                                HapticFeedback.lightImpact();
+                                _category = val!;
+                              },
                             ),
-                            filled: true,
-                            fillColor: theme.colorScheme.surface,
-                          ),
-                          items: accounts
-                              .map((e) => DropdownMenuItem(
-                                    value: e,
-                                    child: Text(e),
-                                  ))
-                              .toList(),
-                          onChanged: (val) {
-                            HapticFeedback.lightImpact();
-                            _account = val!;
-                          },
+                            const SizedBox(height: 16),
+                            
+                            // Account Dropdown
+                            DropdownButtonFormField<String>(
+                              value: _account,
+                              decoration: InputDecoration(
+                                labelText: "Account",
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                filled: true,
+                                fillColor: theme.colorScheme.surface,
+                              ),
+                              items: accounts
+                                  .map((e) => DropdownMenuItem(
+                                        value: e,
+                                        child: Text(e),
+                                      ))
+                                  .toList(),
+                              onChanged: (val) {
+                                HapticFeedback.lightImpact();
+                                _account = val!;
+                              },
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
-
-                // child: LayoutBuilder(
-                //   builder: (context, constraints) {
-                //     return SingleChildScrollView(
-                //       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 16),
-                //       child: ConstrainedBox(
-                //         constraints: BoxConstraints(
-                //           minHeight: 0,
-                //           maxHeight: constraints.maxHeight - 24,
-                //         ),
-                //         child: IntrinsicHeight(
-                //           child: Column(
-                //             mainAxisSize: MainAxisSize.min,
-                //             children: [
-                //               // Amount Field
-                //               TextFormField(
-                //                 controller: _amountController,
-                //                 decoration: InputDecoration(
-                //                   labelText: "Amount",
-                //                   prefixText: "₹ ",
-                //                   border: OutlineInputBorder(
-                //                     borderRadius: BorderRadius.circular(12),
-                //                   ),
-                //                   filled: true,
-                //                   fillColor: theme.colorScheme.surface,
-                //                 ),
-                //                 keyboardType: TextInputType.number,
-                //                 validator: (val) => val == null || val.isEmpty
-                //                     ? "Enter amount"
-                //                     : null,
-                //               ),
-                //               const SizedBox(height: 16),
-                //               // Image Picker
-                //               StatefulBuilder(
-                //                 builder: (context, setState) {
-                //                   return Column(
-                //                     children: [
-                //                       AnimatedSwitcher(
-                //                         duration: const Duration(milliseconds: 300),
-                //                         child: _imagePath == null
-                //                             ? GestureDetector(
-                //                                 key: const ValueKey('add'),
-                //                                 onTap: () async {
-                //                                   final ImagePicker picker = ImagePicker();
-                //                                   final XFile? image = await picker.pickImage(
-                //                                     source: ImageSource.gallery,
-                //                                     maxWidth: 800,
-                //                                     maxHeight: 800,
-                //                                     imageQuality: 80,
-                //                                   );
-                //                                   if (image != null) {
-                //                                     setState(() {
-                //                                       _imagePath = image.path;
-                //                                     });
-                //                                   }
-                //                                 },
-                //                                 child: Container(
-                //                                   width: 56,
-                //                                   height: 32,
-                //                                   decoration: BoxDecoration(
-                //                                     color: theme.colorScheme.surface,
-                //                                     borderRadius: BorderRadius.circular(20),
-                //                                     border: Border.all(
-                //                                       color: theme.colorScheme.primary.withOpacity(0.3),
-                //                                       width: 1,
-                //                                     ),
-                //                                     boxShadow: [
-                //                                       BoxShadow(
-                //                                         color: Colors.black.withOpacity(0.04),
-                //                                         blurRadius: 4,
-                //                                         offset: const Offset(0, 2),
-                //                                       ),
-                //                                     ],
-                //                                   ),
-                //                                   child: Row(
-                //                                     mainAxisAlignment: MainAxisAlignment.center,
-                //                                     children: [
-                //                                       Icon(Icons.camera_alt_outlined, color: theme.colorScheme.primary, size: 18),
-                //                                       const SizedBox(width: 6),
-                //                                       Text("Add Image", style: TextStyle(fontSize: 12, color: theme.colorScheme.primary)),
-                //                                     ],
-                //                                   ),
-                //                                 ),
-                //                               )
-                //                             : Stack(
-                //                                 key: const ValueKey('preview'),
-                //                                 alignment: Alignment.topRight,
-                //                                 children: [
-                //                                   ClipRRect(
-                //                                     borderRadius: BorderRadius.circular(16),
-                //                                     child: Image.file(
-                //                                       File(_imagePath!),
-                //                                       fit: BoxFit.cover,
-                //                                       width: 80,
-                //                                       height: 80,
-                //                                     ),
-                //                                   ),
-                //                                   Positioned(
-                //                                     top: 2,
-                //                                     right: 2,
-                //                                     child: GestureDetector(
-                //                                       onTap: () {
-                //                                         setState(() {
-                //                                           _imagePath = null;
-                //                                         });
-                //                                       },
-                //                                       child: Container(
-                //                                         decoration: BoxDecoration(
-                //                                           color: Colors.black.withOpacity(0.6),
-                //                                           shape: BoxShape.circle,
-                //                                         ),
-                //                                         padding: const EdgeInsets.all(2),
-                //                                         child: const Icon(Icons.close, color: Colors.white, size: 16),
-                //                                       ),
-                //                                     ),
-                //                                   ),
-                //                                 ],
-                //                               ),
-                //                       ),
-                //                       const SizedBox(height: 12),
-                //                     ],
-                //                   );
-                //                 },
-                //               ),
-                //               // Note Field
-                //               TextFormField(
-                //                 controller: _noteController,
-                //                 decoration: InputDecoration(
-                //                   labelText: "Note (Optional)",
-                //                   border: OutlineInputBorder(
-                //                     borderRadius: BorderRadius.circular(12),
-                //                   ),
-                //                   filled: true,
-                //                   fillColor: theme.colorScheme.surface,
-                //                 ),
-                //                 maxLines: 2,
-                //               ),
-                //               const SizedBox(height: 16),
-                              
-                //               // Category Dropdown
-                //               DropdownButtonFormField<String>(
-                //                 value: _category,
-                //                 decoration: InputDecoration(
-                //                   labelText: "Category",
-                //                   border: OutlineInputBorder(
-                //                     borderRadius: BorderRadius.circular(12),
-                //                   ),
-                //                   filled: true,
-                //                   fillColor: theme.colorScheme.surface,
-                //                 ),
-                //                 items: (isIncome ? incomeCategories : expenseCategories)
-                //                     .map((e) => DropdownMenuItem(
-                //                           value: e,
-                //                           child: Text(e),
-                //                         ))
-                //                     .toList(),
-                //                 onChanged: (val) {
-                //                   HapticFeedback.lightImpact();
-                //                   _category = val!;
-                //                 },
-                //               ),
-                //               const SizedBox(height: 16),
-                              
-                //               // Account Dropdown
-                //               DropdownButtonFormField<String>(
-                //                 value: _account,
-                //                 decoration: InputDecoration(
-                //                   labelText: "Account",
-                //                   border: OutlineInputBorder(
-                //                     borderRadius: BorderRadius.circular(12),
-                //                   ),
-                //                   filled: true,
-                //                   fillColor: theme.colorScheme.surface,
-                //                 ),
-                //                 items: accounts
-                //                     .map((e) => DropdownMenuItem(
-                //                           value: e,
-                //                           child: Text(e),
-                //                         ))
-                //                     .toList(),
-                //                 onChanged: (val) {
-                //                   HapticFeedback.lightImpact();
-                //                   _account = val!;
-                //                 },
-                //               ),
-                //             ],
-                //           ),
-                //         ),
-                //       ),
-                //     );
-                //   },
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.pop(context);
+                      },
+                      child: Text(
+                        "Cancel",
+                        style: TextStyle(color: theme.colorScheme.primary),
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      icon: Icon(isIncome ? Icons.add : Icons.remove),
+                      label: Text(isIncome ? "Add Income" : "Add Expense"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isIncome ? Colors.green : Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        if (_formKey.currentState!.validate()) {
+                          final tx = Transaction(
+                            amount: double.parse(_amountController.text),
+                            note: _noteController.text,
+                            category: _category,
+                            account: _account,
+                            date: DateTime.now(),
+                            isIncome: _isIncome,
+                            imagePaths: _imagePaths.isNotEmpty ? List<String>.from(_imagePaths) : null,
+                          );
+                          Provider.of<TransactionProvider>(context, listen: false)
+                              .addTransaction(tx);
+                          _lastAddedTx = tx;
+                          
+                          // Check and add person transactions
+                          _checkAndAddPersonTransactions(tx);
+                          
+                          // Show success message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isIncome ? "Income added successfully!" : "Expense added successfully!",
+                              ),
+                              backgroundColor: isIncome ? Colors.green : Colors.red,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              duration: const Duration(seconds: 2),
+                              action: SnackBarAction(
+                                label: 'Undo',
+                                textColor: Colors.white,
+                                onPressed: () {
+                                  Provider.of<TransactionProvider>(context, listen: false)
+                                      .deleteTransaction(_lastAddedTx!);
+                                },
+                              ),
+                            ),
+                          );
+                          if (Navigator.canPop(context)) {
+                            Navigator.pop(context);
+                          }
+                          // Show animated checkmark overlay
+                          showDialog(
+                            context: context,
+                            barrierColor: Colors.transparent,
+                            barrierDismissible: true,
+                            builder: (_) => SuccessOverlay(key: overlayKey),
+                          );
+                          Future.delayed(const Duration(milliseconds: 900), () {
+                            if (overlayKey.currentContext != null) Navigator.of(context, rootNavigator: true).pop();
+                          });
+                         
+                        }
+                      },
+                    ),
+                  ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    Navigator.pop(context);
-                  },
-                  child: Text(
-                    "Cancel",
-                    style: TextStyle(color: theme.colorScheme.primary),
-                  ),
-                ),
-                ElevatedButton.icon(
-                  icon: Icon(isIncome ? Icons.add : Icons.remove),
-                  label: Text(isIncome ? "Add Income" : "Add Expense"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isIncome ? Colors.green : Colors.red,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    if (_formKey.currentState!.validate()) {
-                      final tx = Transaction(
-                        amount: double.parse(_amountController.text),
-                        note: _noteController.text,
-                        category: _category,
-                        account: _account,
-                        date: DateTime.now(),
-                        isIncome: _isIncome,
-                        imagePath: _imagePath,
-                      );
-                      Provider.of<TransactionProvider>(context, listen: false)
-                          .addTransaction(tx);
-                      
-                      // Check for person names in the note and add person transactions
-                      _checkAndAddPersonTransactions(tx);
-                      
-                      // Show success message
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            isIncome ? "Income added successfully!" : "Expense added successfully!",
-                          ),
-                          backgroundColor: isIncome ? Colors.green : Colors.red,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      );
-                      
-                      Navigator.pop(context);
-                    }
-                  },
-                ),
-              ],
             ),
           ),
         );
-      },
-    );
+      }
+      );
   }
 
   void _checkAndAddPersonTransactions(Transaction tx) {
@@ -1161,6 +1076,56 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             child: Text("Close", style: TextStyle(color: theme.colorScheme.primary)),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class SuccessOverlay extends StatefulWidget {
+  const SuccessOverlay({Key? key}) : super(key: key);
+  @override
+  SuccessOverlayState createState() => SuccessOverlayState();
+}
+
+class SuccessOverlayState extends State<SuccessOverlay> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 600));
+    _controller.forward();
+  }
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final scale = Tween<double>(begin: 0.5, end: 1.2).transform(Curves.elasticOut.transform(_controller.value));
+          return Transform.scale(
+            scale: scale,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.9),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.green.withOpacity(0.3),
+                    blurRadius: 24,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(32),
+              child: const Icon(Icons.check_circle, color: Colors.white, size: 64),
+            ),
+          );
+        },
       ),
     );
   }

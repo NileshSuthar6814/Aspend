@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:zoom_tap_animation/zoom_tap_animation.dart';
 import 'dart:ui';
 import '../models/transaction.dart';
 import '../providers/theme_provider.dart';
@@ -149,32 +150,38 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
     return Row(
       children: [
         Expanded(
+          child: ZoomTapAnimation(
           child: _buildSummaryCard(
             "Income",
             totalIncome,
             Colors.green,
             Icons.trending_up,
             isDark,
+            ),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
+          child: ZoomTapAnimation(
           child: _buildSummaryCard(
             "Expenses",
             totalSpend,
             Colors.red,
             Icons.trending_down,
             isDark,
+            ),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
+          child: ZoomTapAnimation(
           child: _buildSummaryCard(
             "Balance",
             netBalance,
             netBalance >= 0 ? Colors.blue : Colors.orange,
             Icons.account_balance_wallet,
             isDark,
+            ),
           ),
         ),
       ],
@@ -268,10 +275,10 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
           fontWeight: FontWeight.w500,
           letterSpacing: 0.1,
         ),
-        tabs: const [
-          Tab(text: "Overview"),
-          Tab(text: "Trends"),
-          Tab(text: "Categories"),
+        tabs: [
+          ZoomTapAnimation(child: const Tab(text: "Overview")),
+          ZoomTapAnimation(child: const Tab(text: "Trends")),
+          ZoomTapAnimation(child: const Tab(text: "Categories")),
         ],
       ),
     );

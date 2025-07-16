@@ -20,7 +20,7 @@ import '../providers/person_provider.dart';
 import '../providers/person_transaction_provider.dart';
 import '../providers/transaction_provider.dart';
 import '../services/pdf_service.dart';
-//import 'package:zoom_tap_animation/zoom_tap_animation.dart';
+import 'package:zoom_tap_animation/zoom_tap_animation.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -119,7 +119,23 @@ class _SettingsPageState extends State<SettingsPage> {
                   _buildSectionHeader("App Information", Icons.info),
                   const SizedBox(height: 12),
                   _buildAppInfoSection(context, isDark),
-                  const SizedBox(height: 100),
+                  const SizedBox(height: 10 ),
+                  // Add developer credit at the very bottom
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 24, bottom: 12),
+                      child: Text(
+                        'Developed with ❤️ by Sthrnilshaa',
+                        style: GoogleFonts.nunito(
+                          fontSize: 12,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.2,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -409,65 +425,67 @@ class _SettingsPageState extends State<SettingsPage> {
   }) {
     final theme = Theme.of(context);
     final isDark = context.watch<AppThemeProvider>().isDarkMode;
-    
-    return Card(
-      elevation: 1,
-      margin: const EdgeInsets.only(bottom: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        leading: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: isDestructive 
-                ? Colors.red.withOpacity(0.1)
-                : Colors.teal.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
+    return ZoomTapAnimation(
+      onTap: onTap,
+      child: Card(
+        elevation: 1,
+        margin: const EdgeInsets.only(bottom: 6),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          leading: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
               color: isDestructive 
-                  ? Colors.red.withOpacity(0.3)
-                  : Colors.teal.withOpacity(0.3),
-              width: 1,
+                  ? Colors.red.withOpacity(0.1)
+                  : Colors.teal.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isDestructive 
+                    ? Colors.red.withOpacity(0.3)
+                    : Colors.teal.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              icon,
+              color: isDestructive ? Colors.red : Colors.teal,
+              size: 18,
             ),
           ),
-          child: Icon(
-            icon,
-            color: isDestructive ? Colors.red : Colors.teal,
-            size: 18,
+          title: Text(
+            title,
+            style: GoogleFonts.nunito(
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
+              color: isDestructive ? Colors.red : null,
+            ),
           ),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.nunito(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-            color: isDestructive ? Colors.red : null,
+          subtitle: Text(
+            subtitle,
+            style: GoogleFonts.nunito(
+              fontSize: 13,
+              color: Colors.grey.shade600,
+            ),
           ),
+          trailing: onTap != null 
+              ? Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_ios,
+                    size: 14,
+                    color: Colors.grey.shade400,
+                  ),
+                )
+              : null,
+          onTap: onTap,
         ),
-        subtitle: Text(
-          subtitle,
-          style: GoogleFonts.nunito(
-            fontSize: 13,
-            color: Colors.grey.shade600,
-          ),
-        ),
-        trailing: onTap != null 
-            ? Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(
-                  Icons.arrow_forward_ios,
-                  size: 14,
-                  color: Colors.grey.shade400,
-                ),
-              )
-            : null,
-        onTap: onTap,
       ),
     );
   }

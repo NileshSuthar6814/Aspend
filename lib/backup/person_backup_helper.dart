@@ -40,6 +40,7 @@ class PersonBackupHelper {
   }
 
   static Future<void> importFromJson(BuildContext context) async {
+    try {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
@@ -67,11 +68,35 @@ class PersonBackupHelper {
           txBox.add(tx);
         }
       }
-      
       // Notify providers to reload data
       if (context.mounted) {
         context.read<PersonProvider>().loadPeople();
         context.read<PersonTransactionProvider>().loadTransactions();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('People data imported successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No file selected.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('People import failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }

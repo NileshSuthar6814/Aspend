@@ -15,6 +15,7 @@ class DataExporter {
       'account': t.account,
       'date': t.date.toIso8601String(),
       'isIncome': t.isIncome,
+      'imagePaths': t.imagePaths ?? [],
     }).toList();
 
     final data = jsonEncode(transactions);
