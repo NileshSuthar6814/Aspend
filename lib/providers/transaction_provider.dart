@@ -7,6 +7,15 @@ class TransactionProvider with ChangeNotifier {
   List<Transaction> _transactions = [];
   double _currentBalance = 0;
 
+  // Add sort order state
+  bool _sortByNewestFirst = true;
+  bool get sortByNewestFirst => _sortByNewestFirst;
+  void toggleSortOrder() {
+    _sortByNewestFirst = !_sortByNewestFirst;
+    _markDirty();
+    notifyListeners();
+  }
+
   // Memoization for expensive computations
   List<Transaction>? _cachedSpends;
   List<Transaction>? _cachedIncomes;
@@ -40,10 +49,14 @@ class TransactionProvider with ChangeNotifier {
     return _cachedIncomes!;
   }
 
-  // Get all transactions sorted by date (newest first)
+  // Get all transactions sorted by date (newest first or oldest first)
   List<Transaction> get sortedTransactions {
     if (_isDirty) {
-      _transactions.sort((a, b) => b.date.compareTo(a.date));
+      if (_sortByNewestFirst) {
+        _transactions.sort((a, b) => b.date.compareTo(a.date));
+      } else {
+        _transactions.sort((a, b) => a.date.compareTo(b.date));
+      }
     }
     return _transactions;
   }

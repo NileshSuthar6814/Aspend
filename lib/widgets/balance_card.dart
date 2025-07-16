@@ -79,7 +79,7 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: Container(
-            margin: const EdgeInsets.all(12),
+            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             decoration: BoxDecoration(
               gradient: useAdaptive
                   ? LinearGradient(
@@ -116,13 +116,14 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
                         'Current Balance',
@@ -139,11 +140,12 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   
                   // Balance Amount
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Expanded(
                         child: Text(
@@ -181,7 +183,7 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   
                   // Quick Stats
                   Row(
@@ -379,6 +381,7 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
+                    duration: const Duration(seconds: 2),
                   ),
                 );
               } else {
@@ -386,6 +389,7 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
                   const SnackBar(
                     content: Text("Please enter a valid number"),
                     backgroundColor: Colors.red,
+                    duration: Duration(seconds: 2),
                   ),
                 );
               }

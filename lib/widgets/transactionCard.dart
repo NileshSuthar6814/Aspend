@@ -112,7 +112,7 @@ class TransactionCard extends StatelessWidget {
               Provider.of<TransactionProvider>(context, listen: false)
                   .deleteTransaction(tx);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Transaction deleted")),
+                const SnackBar(content: Text("Transaction deleted"), duration: Duration(seconds: 2)),
               );
             },
             child: Text("Delete", style: TextStyle(color: Colors.white)),

@@ -185,8 +185,10 @@ class _TransactionTileState extends State<TransactionTile>
                   ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       // Category Icon
                       Container(
@@ -393,128 +395,83 @@ class _TransactionTileState extends State<TransactionTile>
     final textColor = isDark ? Colors.white : Colors.black;
     final categoryIcon = _getCategoryIcon(widget.transaction.category);
     final categoryColor = _getCategoryColor(widget.transaction.category);
+    final mq = MediaQuery.of(context);
+    final sheetWidth = mq.size.height * 0.9;
 
     showModalBottomSheet(
+
+      //set the buttom position
+
+
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28),
+          bottom: Radius.circular(28),
+        ),
       ),
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.55,
-        minChildSize: 0.40,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) {
-          return AnimatedBuilder(
-            animation: scrollController,
-            builder: (context, child) {
-              double extent = 0.55;
-              try {
-                extent = (scrollController.position.viewportDimension + scrollController.position.pixels) /
-                    scrollController.position.maxScrollExtent;
-                extent = extent.clamp(0.0, 1.0);
-              } catch (_) {}
-              final double radius = 28 * (1 - extent);
-              return Material(
-                elevation: 8,
-                color: theme.colorScheme.surface,
-                surfaceTintColor: theme.colorScheme.surfaceTint,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(radius)),
-                child: Container(
+      builder: (_) => ConstrainedBox(
+
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.65,
+          maxWidth: sheetWidth,
+          minWidth: 500,
+
+        ),
+        child: DraggableScrollableSheet(
+
+
+          initialChildSize: 0.55,
+          minChildSize: 0.35,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) {
+            return Material(
+              color: theme.colorScheme.surface,
+              elevation: 2,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28),
+                bottom: Radius.circular(28),
+              ),
+              child: SingleChildScrollView(
+                controller: scrollController,
+                child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                  child: SingleChildScrollView(
-                    controller: scrollController,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Center(
-                                child: Container(
-                                  width: 40,
-                                  height: 4,
-                                  margin: const EdgeInsets.only(bottom: 16),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.outlineVariant.withOpacity(0.25),
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Row(
+              children: [
+                          Expanded(
+                            child: Center(
+                              child: Container(
+                                width: 40,
+                                height: 4,
+                                margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                                  color: Colors.grey.withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(2),
                                 ),
                               ),
                             ),
-                            IconButton(
-                              icon: Icon(Icons.close, color: textColor.withOpacity(0.7)),
-                              onPressed: () => Navigator.of(context).pop(),
-                              tooltip: 'Close',
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: categoryColor.withOpacity(0.18),
-                              radius: 28,
-                              child: Icon(categoryIcon, color: categoryColor, size: 28),
-                            ),
-                            const SizedBox(width: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.transaction.category,
-                                  style: GoogleFonts.nunito(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 20,
-                                    color: textColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  DateFormat.yMMMd().format(widget.transaction.date),
-                                  style: GoogleFonts.nunito(
-                                    fontSize: 14,
-                                    color: textColor.withOpacity(0.7),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: widget.transaction.isIncome ? Colors.green.withOpacity(0.12) : Colors.red.withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Text(
-                                widget.transaction.isIncome ? 'Income' : 'Expense',
-                                style: GoogleFonts.nunito(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                  color: widget.transaction.isIncome ? Colors.green : Colors.red,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        _buildDetailRow("Amount", "₹${widget.transaction.amount.toStringAsFixed(2)}", textColor),
-                        _buildDetailRow("Note", widget.transaction.note.isNotEmpty ? widget.transaction.note : "—", textColor),
-                        _buildDetailRow("Account", widget.transaction.account, textColor),
-                        if (widget.transaction.imagePaths != null && widget.transaction.imagePaths!.isNotEmpty) ...[
-                          const SizedBox(height: 18),
-                          Text("Attachments:", style: GoogleFonts.nunito(fontWeight: FontWeight.bold, color: textColor)),
-                          const SizedBox(height: 10),
-                          Center(
-                            child: SizedBox(
-                              height: 110,
-                              width: double.infinity,
-                              child: ListView.separated(
-                                scrollDirection: Axis.horizontal,
+                          ),
+                          // IconButton(
+                          //   icon: Icon(Icons.close, color: textColor.withOpacity(0.7)),
+                          //   onPressed: () => Navigator.of(context).pop(),
+                          //   tooltip: 'Close',
+                          // ),
+                        ],
+                      ),
+                      if (widget.transaction.imagePaths != null && widget.transaction.imagePaths!.isNotEmpty) ...[
+                        SizedBox(
+                          width: double.infinity,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20),
+                            child: AspectRatio(
+                              aspectRatio: 1.7,
+                              child: PageView.builder(
                                 itemCount: widget.transaction.imagePaths!.length,
-                                separatorBuilder: (_, __) => const SizedBox(width: 16),
                                 itemBuilder: (context, idx) {
                                   final path = widget.transaction.imagePaths![idx];
                                   return GestureDetector(
@@ -530,14 +487,11 @@ class _TransactionTileState extends State<TransactionTile>
                                     },
                                     child: Hero(
                                       tag: 'txn-img-${widget.index}-$idx',
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(16),
-                                        child: Image.file(
-                                          File(path),
-                                          width: 110,
-                                          height: 110,
-                                          fit: BoxFit.cover,
-                                        ),
+                                      child: Image.file(
+                                        File(path),
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                        filterQuality: FilterQuality.high,
                                       ),
                                     ),
                                   );
@@ -545,82 +499,107 @@ class _TransactionTileState extends State<TransactionTile>
                               ),
                             ),
                           ),
-                        ],
-                        const SizedBox(height: 24),
-                        Divider(
-                          height: 32,
-                          thickness: 1.2,
-                          color: theme.colorScheme.outlineVariant.withOpacity(0.25),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _AnimatedPillButton(
-                                icon: Icons.edit,
-                                label: 'Edit',
-                                color: theme.colorScheme.primary,
-                                textColor: Colors.white,
-                                onTap: () {
-                                  Navigator.of(context).pop();
-                                  _showEditTransactionDialog(context, widget.transaction);
-                                },
-                              ),
-                              _AnimatedPillButton(
-                                icon: Icons.delete,
-                                label: 'Delete',
-                                color: Colors.redAccent,
-                                textColor: Colors.white,
-                                onTap: () {
-                                  Navigator.of(context).pop();
-                                  Provider.of<TransactionProvider>(context, listen: false)
-                                      .deleteTransaction(widget.transaction);
-                                },
-                              ),
-                              _AnimatedPillButton(
-                                icon: Icons.share,
-                                label: 'Share',
-                                color: Colors.blueAccent,
-                                textColor: Colors.white,
-                                onTap: () {
-                                  Share.share('Amount: ₹${widget.transaction.amount.toStringAsFixed(2)}\nNote: ${widget.transaction.note}\nCategory: ${widget.transaction.category}\nAccount: ${widget.transaction.account}\nDate: ${DateFormat.yMMMd().format(widget.transaction.date)}');
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                              _AnimatedPillButton(
-                                icon: Icons.copy,
-                                label: 'Copy',
-                                color: Colors.teal,
-                                textColor: Colors.white,
-                                onTap: () {
-                                  Clipboard.setData(ClipboardData(
-                                    text: 'Amount: ₹${widget.transaction.amount.toStringAsFixed(2)}\nNote: ${widget.transaction.note}\nCategory: ${widget.transaction.category}\nAccount: ${widget.transaction.account}\nDate: ${DateFormat.yMMMd().format(widget.transaction.date)}',
-                                  ));
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Transaction details copied!')),
-                                  );
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 18),
                       ],
-                    ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: categoryColor.withOpacity(0.15),
+                            child: Icon(categoryIcon, color: categoryColor),
+                          ),
+                          const SizedBox(width: 12),
+                      Text(
+                            widget.transaction.category,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                      const SizedBox(height: 6),
+                      Text(
+                        DateFormat.yMMMd().format(widget.transaction.date),
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: textColor.withOpacity(0.7),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 18),
+                      _buildDetailRow("Amount", "₹${widget.transaction.amount.toStringAsFixed(2)}", textColor, center: true),
+                      _buildDetailRow("Note", widget.transaction.note.isNotEmpty ? widget.transaction.note : "—", textColor, center: true),
+                      _buildDetailRow("Account", widget.transaction.account, textColor, center: true),
+                      _buildDetailRow("Type", widget.transaction.isIncome ? "Income" : "Expense", textColor, center: true),
+                      const Divider(height: 32, thickness: 1, indent: 0, endIndent: 0),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                            _AnimatedPillButton(
+                              icon: Icons.edit,
+                              label: 'Edit',
+                              color: theme.colorScheme.primary,
+                              textColor: Colors.white,
+                              onTap: () {
+                                Navigator.of(context).pop();
+                      _showEditTransactionDialog(context, widget.transaction);
+                    },
+                  ),
+                            _AnimatedPillButton(
+                              icon: Icons.delete,
+                              label: 'Delete',
+                              color: Colors.redAccent,
+                              textColor: Colors.white,
+                              onTap: () {
+                                Navigator.of(context).pop();
+                      Provider.of<TransactionProvider>(context, listen: false)
+                          .deleteTransaction(widget.transaction);
+                              },
+                            ),
+                            _AnimatedPillButton(
+                              icon: Icons.share,
+                              label: 'Share',
+                              color: Colors.blueAccent,
+                              textColor: Colors.white,
+                              onTap: () {
+                                Share.share('Amount: ₹${widget.transaction.amount.toStringAsFixed(2)}\nNote: ${widget.transaction.note}\nCategory: ${widget.transaction.category}\nAccount: ${widget.transaction.account}\nDate: ${DateFormat.yMMMd().format(widget.transaction.date)}');
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                            _AnimatedPillButton(
+                              icon: Icons.copy,
+                              label: 'Copy',
+                              color: Colors.teal,
+                              textColor: Colors.white,
+                              onTap: () {
+                                Clipboard.setData(ClipboardData(
+                                  text: 'Amount: ₹${widget.transaction.amount.toStringAsFixed(2)}\nNote: ${widget.transaction.note}\nCategory: ${widget.transaction.category}\nAccount: ${widget.transaction.account}\nDate: ${DateFormat.yMMMd().format(widget.transaction.date)}',
+                                ));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Transaction details copied!'), duration: Duration(seconds: 2)),
+                                );
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                   ),
                 ),
-              );
-            }, // AnimatedBuilder
-            child: null,
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value, Color textColor) {
+  Widget _buildDetailRow(String label, String value, Color textColor, {bool center = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -645,6 +624,7 @@ class _TransactionTileState extends State<TransactionTile>
                 color: textColor,
                 fontWeight: FontWeight.w500,
               ),
+              textAlign: center ? TextAlign.center : TextAlign.start,
             ),
           ),
         ],
@@ -834,6 +814,7 @@ class _TransactionTileState extends State<TransactionTile>
                         backgroundColor: Colors.blue,
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        duration: Duration(seconds: 2),
                       ),
                     );
                   }
@@ -965,6 +946,7 @@ class _FullScreenImageDialog extends StatelessWidget {
           child: Hero(
             tag: heroTag,
             child: InteractiveViewer(
+
               boundaryMargin: const EdgeInsets.all(40),
               minScale: 0.8,
               maxScale: 4.0,

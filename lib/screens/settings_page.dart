@@ -91,39 +91,36 @@ class _SettingsPageState extends State<SettingsPage> {
           // Settings Content
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Theme Section
                   _buildSectionHeader("Appearance", Icons.palette),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   _buildThemeCard(context, isDark),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   _buildAdaptiveColorSwitch(context),
-                  const SizedBox(height: 24),
-                  
+                  const SizedBox(height: 18),
                   // Backup & Export Section
                   _buildSectionHeader("Backup & Export", Icons.backup),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   _buildBackupSection(context, isDark),
-                  const SizedBox(height: 24),
-                  
+                  const SizedBox(height: 18),
                   // Data Management Section
                   _buildSectionHeader("Data Management", Icons.storage),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   _buildDataManagementSection(context, isDark),
-                  const SizedBox(height: 24),
-                  
+                  const SizedBox(height: 18),
                   // App Info Section
                   _buildSectionHeader("App Information", Icons.info),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   _buildAppInfoSection(context, isDark),
-                  const SizedBox(height: 10 ),
+                  const SizedBox(height: 8 ),
                   // Add developer credit at the very bottom
                   Center(
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 24, bottom: 12),
+                      padding: const EdgeInsets.only(top: 16, bottom: 8),
                       child: Text(
                         'Developed with ❤️ by Sthrnilshaa',
                         style: GoogleFonts.nunito(
@@ -428,63 +425,63 @@ class _SettingsPageState extends State<SettingsPage> {
     return ZoomTapAnimation(
       onTap: onTap,
       child: Card(
-        elevation: 1,
-        margin: const EdgeInsets.only(bottom: 6),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          leading: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
+      elevation: 1,
+      margin: const EdgeInsets.only(bottom: 6),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        leading: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: isDestructive 
+                ? Colors.red.withOpacity(0.1)
+                : Colors.teal.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
               color: isDestructive 
-                  ? Colors.red.withOpacity(0.1)
-                  : Colors.teal.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: isDestructive 
-                    ? Colors.red.withOpacity(0.3)
-                    : Colors.teal.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: Icon(
-              icon,
-              color: isDestructive ? Colors.red : Colors.teal,
-              size: 18,
+                  ? Colors.red.withOpacity(0.3)
+                  : Colors.teal.withOpacity(0.3),
+              width: 1,
             ),
           ),
-          title: Text(
-            title,
-            style: GoogleFonts.nunito(
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-              color: isDestructive ? Colors.red : null,
-            ),
+          child: Icon(
+            icon,
+            color: isDestructive ? Colors.red : Colors.teal,
+            size: 18,
           ),
-          subtitle: Text(
-            subtitle,
-            style: GoogleFonts.nunito(
-              fontSize: 13,
-              color: Colors.grey.shade600,
-            ),
+        ),
+        title: Text(
+          title,
+          style: GoogleFonts.nunito(
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            color: isDestructive ? Colors.red : null,
           ),
-          trailing: onTap != null 
-              ? Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(
-                    Icons.arrow_forward_ios,
-                    size: 14,
-                    color: Colors.grey.shade400,
-                  ),
-                )
-              : null,
-          onTap: onTap,
+        ),
+        subtitle: Text(
+          subtitle,
+          style: GoogleFonts.nunito(
+            fontSize: 13,
+            color: Colors.grey.shade600,
+          ),
+        ),
+        trailing: onTap != null 
+            ? Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  Icons.arrow_forward_ios,
+                  size: 14,
+                  color: Colors.grey.shade400,
+                ),
+              )
+            : null,
+        onTap: onTap,
         ),
       ),
     );

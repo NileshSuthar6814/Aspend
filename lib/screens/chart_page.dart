@@ -107,17 +107,16 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
           SliverToBoxAdapter(
             child: hasData
                 ? Padding(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         // Summary Cards
                         _buildSummaryCards(totalIncome, totalSpend, isDark),
-                        const SizedBox(height: 20),
-                        
+                        const SizedBox(height: 18),
                         // Chart Tabs
                         _buildChartTabs(isDark),
-                        const SizedBox(height: 12),
-                        
+                        const SizedBox(height: 10),
                         // Chart Content
                         SizedBox(
                           height: 300,
@@ -130,7 +129,7 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
                       ],
                     ),
                   )

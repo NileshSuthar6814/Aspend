@@ -343,23 +343,23 @@ class _PeopleTabState extends State<PeopleTab> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: useAdaptive
-                              ? theme.colorScheme.primary.withOpacity(0.1)
+                              ? theme.colorScheme.primary.withOpacity(0.08)
                               : isDark
-                                  ? Colors.teal.shade900.withOpacity(0.1)
-                                  : Colors.teal.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(16),
+                                  ? Colors.teal.shade900.withOpacity(0.08)
+                                  : Colors.teal.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: useAdaptive
-                                ? theme.colorScheme.primary.withOpacity(0.3)
+                                ? theme.colorScheme.primary.withOpacity(0.22)
                                 : isDark
-                                    ? Colors.teal.shade900.withOpacity(0.3)
-                                    : Colors.teal.withOpacity(0.3),
+                                    ? Colors.teal.shade900.withOpacity(0.22)
+                                    : Colors.teal.withOpacity(0.22),
                             width: 1,
                           ),
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Row(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Container(
                                 width: 60,
@@ -461,9 +461,9 @@ class _PeopleTabState extends State<PeopleTab> {
                               ),
                             ],
                           ),
-                        ),
-                      ),
+            
                     ),
+                    )
                   );
                 },
                 childCount: people.length,
