@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
+
 import '../models/person.dart';
 import '../models/person_transaction.dart';
 
@@ -143,7 +144,6 @@ class PersonProvider with ChangeNotifier {
       // Add to Hive first
       final txBox = Hive.box<PersonTransaction>('personTransactions');
       await txBox.add(tx);
-      
       notifyListeners();
     } catch (e) {
       print('Error adding person transaction: $e');
