@@ -113,6 +113,30 @@ class PersonProvider with ChangeNotifier {
   double totalFor(String name) {
     return transactionsFor(name).fold(0.0, (sum, tx) => sum + (tx.isIncome ? tx.amount : -tx.amount));
   }
+  // (sum of all positive balances)
+  double get overallTotalRent {
+    double totalRent = 0;
+    for (var person in _people) {
+      double personTotal = totalFor(person.name);
+      if (personTotal > 0) {
+        totalRent += personTotal;
+      }
+    }
+    return totalRent;
+  }
+
+  // Calculates the total amount of money you owe to all people
+  // (sum of all negative balances, expressed as a positive number)
+  double get overallTotalGiven {
+    double totalGiven = 0;
+    for (var person in _people) {
+      double personTotal = totalFor(person.name);
+      if (personTotal < 0) {
+        totalGiven += personTotal.abs(); // .abs() to make it a positive value for "Total You Give"
+      }
+    }
+    return totalGiven;
+  }
 
   Future<void> addTransaction(PersonTransaction tx) async {
     try {

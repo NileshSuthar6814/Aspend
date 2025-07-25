@@ -31,12 +31,12 @@ class _PeopleTabState extends State<PeopleTab> {
 
     _scrollController.addListener(() {
       if (!_scrollController.hasClients) return;
-      
+
       final atTop = _scrollController.position.pixels <= 0;
       final people = context.read<PersonProvider>().people;
       final isEmpty = people.isEmpty;
       final shouldShowFab = atTop || isEmpty;
-      
+
       // Only update state if there's an actual change
       if (shouldShowFab != _showFab) {
         setState(() => _showFab = shouldShowFab);
@@ -58,9 +58,9 @@ class _PeopleTabState extends State<PeopleTab> {
     showDialog(
       context: context,
       builder: (_) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+        builder: (context, setStateDialog) => AlertDialog( // Changed setState to setStateDialog
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
             'Add New Person',
             style: GoogleFonts.nunito(
@@ -81,7 +81,7 @@ class _PeopleTabState extends State<PeopleTab> {
                   );
 
                   if (image != null) {
-                    setState(() {
+                    setStateDialog(() { // Changed setState to setStateDialog
                       selectedPhotoPath = image.path;
                     });
                   }
@@ -103,33 +103,33 @@ class _PeopleTabState extends State<PeopleTab> {
                   ),
                   child: selectedPhotoPath != null
                       ? ClipRRect(
-                          borderRadius: BorderRadius.circular(48),
-                          child: Image.file(
-                            File(selectedPhotoPath!),
-                            width: 96,
-                            height: 96,
-                            fit: BoxFit.cover,
-                          ),
-                        )
+                    borderRadius: BorderRadius.circular(48),
+                    child: Image.file(
+                      File(selectedPhotoPath!),
+                      width: 96,
+                      height: 96,
+                      fit: BoxFit.cover,
+                    ),
+                  )
                       : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_a_photo,
-                              size: 30,
-                              color: theme.colorScheme.primary,
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Add Photo',
-                              style: GoogleFonts.nunito(
-                                fontSize: 12,
-                                color: theme.colorScheme.primary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.add_a_photo,
+                        size: 30,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Add Photo',
+                        style: GoogleFonts.nunito(
+                          fontSize: 12,
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
                         ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -139,6 +139,7 @@ class _PeopleTabState extends State<PeopleTab> {
                   fontSize: 14,
                   color: theme.colorScheme.onSurface.withOpacity(0.7),
                 ),
+                textAlign: TextAlign.center, // Added for better text centering
               ),
               const SizedBox(height: 20),
               TextField(
@@ -167,12 +168,12 @@ class _PeopleTabState extends State<PeopleTab> {
               },
               child: TextButton(
                 onPressed: null,
-              child: Text(
-                'Cancel',
-                style: GoogleFonts.nunito(
-                    fontSize: 16, fontWeight: FontWeight.w600),
+                child: Text(
+                  'Cancel',
+                  style: GoogleFonts.nunito(
+                      fontSize: 16, fontWeight: FontWeight.w600),
+                ),
               ),
-            ),
             ),
             ZoomTapAnimation(
               onTap: () {
@@ -180,30 +181,76 @@ class _PeopleTabState extends State<PeopleTab> {
                 if (name.isNotEmpty) {
                   HapticFeedback.lightImpact();
                   final person =
-                      Person(name: name, photoPath: selectedPhotoPath);
+                  Person(name: name, photoPath: selectedPhotoPath);
                   context.read<PersonProvider>().addPerson(person);
                   Navigator.pop(context);
                 }
               },
               child: ElevatedButton(
                 onPressed: null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              child: Text(
-                'Add Person',
-                style: GoogleFonts.nunito(
-                    fontSize: 16, fontWeight: FontWeight.w600),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: Text(
+                  'Add Person',
+                  style: GoogleFonts.nunito(
+                      fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // NEW: Helper widget for the summary info at the top
+  Widget _buildSummaryInfo(BuildContext context,
+      {required String label,
+        required double amount,
+        required Color color,
+        required IconData icon}) {
+    final theme = Theme.of(context);
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.nunito(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.9),
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 5),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 18),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  "₹${amount.toStringAsFixed(2)}", // Ensure currency symbol is correct
+                  style: GoogleFonts.nunito(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -215,6 +262,10 @@ class _PeopleTabState extends State<PeopleTab> {
     final theme = Theme.of(context);
     final isDark = context.watch<AppThemeProvider>().isDarkMode;
     final useAdaptive = context.watch<AppThemeProvider>().useAdaptiveColor;
+
+    // NEW: Get the overall totals from the provider
+    final double totalYouGet = personProvider.overallTotalRent;
+    final double totalYouGive = personProvider.overallTotalGiven;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -244,30 +295,30 @@ class _PeopleTabState extends State<PeopleTab> {
                     decoration: BoxDecoration(
                       gradient: useAdaptive
                           ? LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                theme.colorScheme.primary,
-                                theme.colorScheme.primaryContainer
-                              ],
-                            )
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          theme.colorScheme.primary,
+                          theme.colorScheme.primaryContainer
+                        ],
+                      )
                           : isDark
-                              ? LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Colors.teal.shade900.withOpacity(0.8),
-                                    Colors.teal.shade700.withOpacity(0.8)
-                                  ],
-                                )
-                              : LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Colors.teal.shade100.withOpacity(0.8),
-                                    Colors.teal.shade200.withOpacity(0.8)
-                                  ],
-                                ),
+                          ? LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.teal.shade900.withOpacity(0.8),
+                          Colors.teal.shade700.withOpacity(0.8)
+                        ],
+                      )
+                          : LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.teal.shade100.withOpacity(0.8),
+                          Colors.teal.shade200.withOpacity(0.8)
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -275,29 +326,81 @@ class _PeopleTabState extends State<PeopleTab> {
             ),
             centerTitle: true,
           ),
+
+          // NEW: Conditional Sliver for Total Debit and Credit Summary
+          if (people.isNotEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 8.0),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  decoration: BoxDecoration(
+                      color: theme.cardColor.withOpacity(0.85),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.shadowColor.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                      border: Border.all(
+                        color: theme.colorScheme.outline.withOpacity(0.2),
+                        width: 1,
+                      )
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildSummaryInfo(
+                        context,
+                        label: "Total You Get",
+                        amount: totalYouGet,
+                        color: Colors.green.shade600,
+                        icon: Icons.arrow_circle_down_rounded,
+                      ),
+                      Container(
+                        height: 35,
+                        width: 1,
+                        color: theme.colorScheme.outline.withOpacity(0.3),
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      _buildSummaryInfo(
+                        context,
+                        label: "Total You Give",
+                        amount: totalYouGive,
+                        color: Colors.red.shade600,
+                        icon: Icons.arrow_circle_up_rounded,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
           if (people.isEmpty)
             SliverFillRemaining(
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                                                Container(
-                              width: 120,
-                              height: 120,
-                              decoration: BoxDecoration(
-                                color: useAdaptive
-                                    ? theme.colorScheme.primary.withOpacity(0.1)
-                                    : theme.colorScheme.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(60),
-                              ),
-                              child: Icon(
-                                Icons.people_outline,
-                                size: 60,
-                                color: useAdaptive
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.primary,
-                              ),
-                            ),
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: useAdaptive
+                            ? theme.colorScheme.primary.withOpacity(0.1)
+                            : theme.colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(60),
+                      ),
+                      child: Icon(
+                        Icons.people_outline,
+                        size: 60,
+                        color: useAdaptive
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.primary,
+                      ),
+                    ),
                     const SizedBox(height: 24),
                     Text(
                       "No people added yet",
@@ -323,42 +426,42 @@ class _PeopleTabState extends State<PeopleTab> {
           else
             SliverList(
               delegate: SliverChildBuilderDelegate(
-                (context, index) {
+                    (context, index) {
                   final person = people[index];
                   final total = personProvider.totalFor(person.name);
                   final isPositive = total >= 0;
 
                   return Container(
-                    margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
-                    child: ZoomTapAnimation(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => PersonDetailPage(person: person),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: useAdaptive
-                              ? theme.colorScheme.primary.withOpacity(0.08)
-                              : isDark
-                                  ? Colors.teal.shade900.withOpacity(0.08)
-                                  : Colors.teal.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
+                      margin: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+                      child: ZoomTapAnimation(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PersonDetailPage(person: person),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
                             color: useAdaptive
-                                ? theme.colorScheme.primary.withOpacity(0.22)
+                                ? theme.colorScheme.primary.withOpacity(0.08)
                                 : isDark
-                                    ? Colors.teal.shade900.withOpacity(0.22)
-                                    : Colors.teal.withOpacity(0.22),
-                            width: 1,
+                                ? Colors.teal.shade900.withOpacity(0.08)
+                                : Colors.teal.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: useAdaptive
+                                  ? theme.colorScheme.primary.withOpacity(0.22)
+                                  : isDark
+                                  ? Colors.teal.shade900.withOpacity(0.22)
+                                  : Colors.teal.withOpacity(0.22),
+                              width: 1,
+                            ),
                           ),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        child: Row(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Container(
@@ -368,35 +471,35 @@ class _PeopleTabState extends State<PeopleTab> {
                                   color: person.photoPath != null
                                       ? Colors.transparent
                                       : useAdaptive
-                                          ? theme.colorScheme.primary.withOpacity(0.1)
-                                          : Colors.teal.withOpacity(0.1),
+                                      ? theme.colorScheme.primary.withOpacity(0.1)
+                                      : Colors.teal.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(30),
                                   border: person.photoPath != null
                                       ? Border.all(
-                                          color: useAdaptive
-                                              ? theme.colorScheme.primary.withOpacity(0.3)
-                                              : Colors.teal.withOpacity(0.3),
-                                          width: 1,
-                                        )
+                                    color: useAdaptive
+                                        ? theme.colorScheme.primary.withOpacity(0.3)
+                                        : Colors.teal.withOpacity(0.3),
+                                    width: 1,
+                                  )
                                       : null,
                                 ),
                                 child: person.photoPath != null
                                     ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(28),
-                                        child: Image.file(
-                                          File(person.photoPath!),
-                                          width: 56,
-                                          height: 56,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      )
+                                  borderRadius: BorderRadius.circular(28),
+                                  child: Image.file(
+                                    File(person.photoPath!),
+                                    width: 56,
+                                    height: 56,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
                                     : Icon(
-                                        Icons.person,
-                                        color: useAdaptive
-                                            ? theme.colorScheme.primary
-                                            : Colors.teal,
-                                        size: 30,
-                                      ),
+                                  Icons.person,
+                                  color: useAdaptive
+                                      ? theme.colorScheme.primary
+                                      : Colors.teal,
+                                  size: 30,
+                                ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -461,23 +564,26 @@ class _PeopleTabState extends State<PeopleTab> {
                               ),
                             ],
                           ),
-            
-                    ),
-                    )
+
+                        ),
+                      )
                   );
                 },
                 childCount: people.length,
               ),
             ),
-          SliverToBoxAdapter(child: SizedBox(height: 80)),
+          SliverToBoxAdapter(child: SizedBox(height: 80)), // Your existing SizedBox
         ],
       ),
       floatingActionButton: people.isEmpty
           ? _buildAddPersonFab(context)
           : (_showFab ? _buildAddPersonFab(context) : null),
+      // floatingActionButtonLocation is not specified in your code, so FAB will use default.
+      // If you had it before (e.g. FloatingActionButtonLocation.centerFloat), you can add it back.
     );
   }
 
+  // This method is PRESERVED EXACTLY AS YOU PROVIDED IT
   Widget _buildAddPersonFab(BuildContext context) {
     final theme = Theme.of(context);
     return ZoomTapAnimation(
@@ -486,29 +592,29 @@ class _PeopleTabState extends State<PeopleTab> {
         HapticFeedback.lightImpact();
       },
       child: Container(
-      margin: const EdgeInsets.only(bottom: 60),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(
-                color: theme.colorScheme.outline.withOpacity(0.2),
-                width: 1,
+        margin: const EdgeInsets.only(bottom: 60),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: theme.colorScheme.outline.withOpacity(0.2),
+                  width: 1,
+                ),
               ),
-            ),
-            child: FloatingActionButton.extended(
-                onPressed: null,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              icon: const Icon(Icons.person_add, size: 24),
-              label: Text(
-                'Add Person',
-                style: GoogleFonts.nunito(
-                    fontSize: 16, fontWeight: FontWeight.w600),
+              child: FloatingActionButton.extended(
+                onPressed: null, // Tap is handled by ZoomTapAnimation
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                icon: const Icon(Icons.person_add, size: 24),
+                label: Text(
+                  'Add Person',
+                  style: GoogleFonts.nunito(
+                      fontSize: 16, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface), // Added color for visibility if surface is transparent
                 ),
               ),
             ),

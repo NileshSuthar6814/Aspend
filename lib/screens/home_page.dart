@@ -614,7 +614,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   content: Text(filtered.isEmpty ? "No transactions found." : "Showing results for '$query'"),
                   backgroundColor: filtered.isEmpty ? Colors.red : Colors.blue,
                   behavior: SnackBarBehavior.floating,
-                  duration: const Duration(seconds: 1),
+                  duration: const Duration(seconds: 2),
                 ),
               );
             },
@@ -655,7 +655,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final List<String> expenseCategories = [
       "Food", "Transport", "Shopping", "Bills", "Entertainment", "Health", "Education", "Other"
     ];
-    final List<String> accounts = ["Cash", "Online", "Credit Card", "Digital Wallet"];
+    final List<String> accounts = ["Cash", "Bank", "Credit Card", "Digital Wallet"];
 
     showModalBottomSheet(
       context: context,
@@ -1004,7 +1004,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          duration: const Duration(seconds: 1),
+                          duration: const Duration(seconds: 2),
                           action: SnackBarAction(
                             label: 'Undo',
                             textColor: Colors.white,
@@ -1070,7 +1070,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
             backgroundColor: Colors.blue,
             behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 1),
+            duration: const Duration(seconds: 2),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
