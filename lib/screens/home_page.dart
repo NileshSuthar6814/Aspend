@@ -106,7 +106,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final isDark = context.watch<AppThemeProvider>().isDarkMode;
     final useAdaptive = context.watch<AppThemeProvider>().useAdaptiveColor;
     final transactionProvider = context.watch<TransactionProvider>();
-    final txns = _filteredTransactions ?? transactionProvider.sortedTransactions;
+    final txns =
+        _filteredTransactions ?? transactionProvider.sortedTransactions;
     final balance = transactionProvider.totalBalance;
     final grouped = _groupTransactionsByDate(txns);
     final hasTransactions = txns.isNotEmpty;
@@ -147,25 +148,39 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ? LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                              colors: [theme.colorScheme.primary, theme.colorScheme.primaryContainer],
-                            )
+                                colors: [
+                                  theme.colorScheme.primary,
+                                  theme.colorScheme.primaryContainer
+                                ],
+                              )
                           : isDark
                             ? LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
-                                colors: [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)],
-                              )
+                                    colors: [
+                                      theme.colorScheme.primary
+                                          .withOpacity(0.8),
+                                      theme.colorScheme.primaryContainer
+                                          .withOpacity(0.8)
+                                    ],
+                                  )
                             : LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
-                                colors: [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
-                      ),
+                                    colors: [
+                                      theme.colorScheme.primary
+                                          .withOpacity(0.8),
+                                      theme.colorScheme.primaryContainer
+                                          .withOpacity(0.8)
+                                    ],
+                                  ),
                     ),
                   ),
                 ),
               ),
             ),
-            actions: [
+              centerTitle: true,
+              actions: [
               IconButton(
                 icon: Icon(
                   Icons.analytics_outlined,
@@ -202,8 +217,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   },
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  child: Row(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                    child: Row(
                     children: [
                       Icon(
                         Icons.history,
@@ -222,17 +238,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       const Spacer(),
                       Builder(
                         builder: (context) {
-                          final sortByNewest = context.watch<TransactionProvider>().sortByNewestFirst;
-                          return IconButton(
-                            tooltip: sortByNewest ? 'Sort by Oldest' : 'Sort by Newest',
-                            icon: Icon(
-                              sortByNewest ? Icons.arrow_downward : Icons.arrow_upward,
-                              color: Colors.teal.shade700,
+                            final sortByNewest = context
+                                .watch<TransactionProvider>()
+                                .sortByNewestFirst;
+                            return IconButton(
+                              tooltip: sortByNewest
+                                  ? 'Sort by Oldest'
+                                  : 'Sort by Newest',
+                              icon: Icon(
+                                sortByNewest
+                                    ? Icons.arrow_downward
+                                    : Icons.arrow_upward,
+                                color: Colors.teal.shade700,
                               size: 20,
                             ),
                             onPressed: () {
-                              context.read<TransactionProvider>().toggleSortOrder();
-                            },
+                                context
+                                    .read<TransactionProvider>()
+                                    .toggleSortOrder();
+                              },
                           );
                         },
                       ),
@@ -250,11 +274,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   String dateKey = grouped.entries.elementAt(index).key;
                   List<Transaction> dayTxs = grouped[dateKey]!;
                   final sortByNewest = transactionProvider.sortByNewestFirst;
-                  List<Transaction> dayIncomes = dayTxs.where((t) => t.isIncome).toList()
-                    ..sort((a, b) => sortByNewest ? b.date.compareTo(a.date) : a.date.compareTo(b.date));
-                  List<Transaction> dayExpenses = dayTxs.where((t) => !t.isIncome).toList()
-                    ..sort((a, b) => sortByNewest ? b.date.compareTo(a.date) : a.date.compareTo(b.date));
-                  int transactionIndex = 0;
+                    List<Transaction> dayIncomes = dayTxs
+                        .where((t) => t.isIncome)
+                        .toList()
+                      ..sort((a, b) => sortByNewest
+                          ? b.date.compareTo(a.date)
+                          : a.date.compareTo(b.date));
+                    List<Transaction> dayExpenses = dayTxs
+                        .where((t) => !t.isIncome)
+                        .toList()
+                      ..sort((a, b) => sortByNewest
+                          ? b.date.compareTo(a.date)
+                          : a.date.compareTo(b.date));
+                    int transactionIndex = 0;
 
                   // Parse the dateKey to DateTime for formatting
                   DateTime? parsedDate;
@@ -265,25 +297,34 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   }
                   String formattedDate = dateKey;
                   if (parsedDate != null) {
-                    formattedDate = DateFormat('EEEE, d MMMM').format(parsedDate);
-                  }
+                      formattedDate =
+                          DateFormat('EEEE, d MMMM').format(parsedDate);
+                    }
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Combined Date and Transaction Type Header
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        child: Row(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          child: Row(
                           children: [
                             // Date Badge
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                  color: useAdaptive ? theme.colorScheme.primary.withOpacity(0.1) : Colors.teal.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(16),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: useAdaptive
+                                      ? theme.colorScheme.primary
+                                          .withOpacity(0.1)
+                                      : Colors.teal.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                    color: useAdaptive ? theme.colorScheme.primary.withOpacity(0.3) : Colors.teal.withOpacity(0.3),
-                                  width: 1,
+                                    color: useAdaptive
+                                        ? theme.colorScheme.primary
+                                            .withOpacity(0.3)
+                                        : Colors.teal.withOpacity(0.3),
+                                    width: 1,
                                 ),
                               ),
                               child: Text(
@@ -291,16 +332,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 style: GoogleFonts.nunito(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                    color: useAdaptive ? theme.colorScheme.primary : Colors.teal.shade700,
-                                ),
+                                    color: useAdaptive
+                                        ? theme.colorScheme.primary
+                                        : Colors.teal.shade700,
+                                  ),
                               ),
                             ),
                             const SizedBox(width: 8),
                             // Income Badge
                             if (dayIncomes.isNotEmpty)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
                                   color: Colors.green.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
@@ -311,8 +355,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.trending_up, color: Colors.green, size: 12),
-                                    const SizedBox(width: 4),
+                                      Icon(Icons.trending_up,
+                                          color: Colors.green, size: 12),
+                                      const SizedBox(width: 4),
                                     Text(
                                       "Income",
                                       style: GoogleFonts.nunito(
@@ -328,8 +373,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             // Expense Badge
                             if (dayExpenses.isNotEmpty)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
                                   color: Colors.red.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
@@ -340,8 +386,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.trending_down, color: Colors.red, size: 12),
-                                    const SizedBox(width: 4),
+                                      Icon(Icons.trending_down,
+                                          color: Colors.red, size: 12),
+                                      const SizedBox(width: 4),
                                     Text(
                                       "Expenses",
                                       style: GoogleFonts.nunito(
@@ -356,9 +403,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ],
                         ),
                       ),
-                      ...dayIncomes.map((tx) => TransactionTile(transaction: tx, index: transactionIndex++)).toList(),
-                      ...dayExpenses.map((tx) => TransactionTile(transaction: tx, index: transactionIndex++)).toList(),
-                      const SizedBox(height: 12),
+                        ...dayIncomes
+                            .map((tx) => TransactionTile(
+                                transaction: tx, index: transactionIndex++))
+                            .toList(),
+                        ...dayExpenses
+                            .map((tx) => TransactionTile(
+                                transaction: tx, index: transactionIndex++))
+                            .toList(),
+                        const SizedBox(height: 12),
                     ],
                   );
                 },
@@ -401,13 +454,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           // Bottom padding for better readability
           SliverToBoxAdapter(
-              child: SizedBox(height: MediaQuery.of(context).padding.bottom + 70),
+              child:
+                  SizedBox(height: MediaQuery.of(context).padding.bottom + 70),
             ),
           ],
         ),
       ),
       floatingActionButton: Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
         child: AnimatedSlide(
         offset: _showFab ? Offset.zero : const Offset(0, 1),
         duration: const Duration(milliseconds: 300),
@@ -447,9 +502,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 // Income FAB
                           ZoomTapAnimation(
                                     onTap: () {
-                                      _fabController.forward().then((_) => _fabController.reverse());
-                                      _showAddTransactionDialog(context, isIncome: true);
-                                      HapticFeedback.heavyImpact();
+                              _fabController
+                                  .forward()
+                                  .then((_) => _fabController.reverse());
+                              _showAddTransactionDialog(context,
+                                  isIncome: true);
+                              HapticFeedback.heavyImpact();
                                     },
                             child: ScaleTransition(
                               scale: _fabScale,
@@ -458,8 +516,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       height: 56,
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
-                                          colors: [Colors.green, Colors.green.shade600],
-                                        ),
+                                    colors: [
+                                      Colors.green,
+                                      Colors.green.shade600
+                                    ],
+                                  ),
                                         borderRadius: BorderRadius.circular(28),
                                         boxShadow: [
                                           BoxShadow(
@@ -481,9 +542,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 // Expense FAB
                           ZoomTapAnimation(
                                     onTap: () {
-                                      _fabController.forward().then((_) => _fabController.reverse());
-                                      _showAddTransactionDialog(context, isIncome: false);
-                                      HapticFeedback.heavyImpact();
+                              _fabController
+                                  .forward()
+                                  .then((_) => _fabController.reverse());
+                              _showAddTransactionDialog(context,
+                                  isIncome: false);
+                              HapticFeedback.heavyImpact();
                                     },
                             child: ScaleTransition(
                               scale: _fabScale,
@@ -525,10 +589,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   // Helper to group transactions by date for filtered results
-  Map<String, List<Transaction>> _groupTransactionsByDate(List<Transaction> txns) {
+  Map<String, List<Transaction>> _groupTransactionsByDate(
+      List<Transaction> txns) {
     final Map<String, List<Transaction>> grouped = {};
     for (final tx in txns) {
-      final dateKey = "${tx.date.year}-${tx.date.month.toString().padLeft(2, '0')}-${tx.date.day.toString().padLeft(2, '0')}";
+      final dateKey =
+          "${tx.date.year}-${tx.date.month.toString().padLeft(2, '0')}-${tx.date.day.toString().padLeft(2, '0')}";
       grouped.putIfAbsent(dateKey, () => []).add(tx);
     }
     return grouped;
@@ -536,7 +602,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   void _showSearchDialog(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
+    final isDark =
+        Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
     final searchController = TextEditingController(text: _searchQuery ?? '');
 
     showDialog(
@@ -598,12 +665,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 Navigator.pop(context);
                 return;
               }
-              final allTxns = Provider.of<TransactionProvider>(context, listen: false).sortedTransactions;
-              final filtered = allTxns.where((tx) =>
-                tx.note.toLowerCase().contains(query) ||
+              final allTxns =
+                  Provider.of<TransactionProvider>(context, listen: false)
+                      .sortedTransactions;
+              final filtered = allTxns
+                  .where((tx) =>
+                      tx.note.toLowerCase().contains(query) ||
                 tx.category.toLowerCase().contains(query) ||
-                tx.account.toLowerCase().contains(query)
-              ).toList();
+                      tx.account.toLowerCase().contains(query))
+                  .toList();
               setState(() {
                 _searchQuery = query;
                 _filteredTransactions = filtered;
@@ -611,7 +681,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(filtered.isEmpty ? "No transactions found." : "Showing results for '$query'"),
+                  content: Text(filtered.isEmpty
+                      ? "No transactions found."
+                      : "Showing results for '$query'"),
                   backgroundColor: filtered.isEmpty ? Colors.red : Colors.blue,
                   behavior: SnackBarBehavior.floating,
                   duration: const Duration(seconds: 2),
@@ -635,7 +707,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  void _showAddTransactionDialog(BuildContext context, {required bool isIncome}) {
+  void _showAddTransactionDialog(BuildContext context,
+      {required bool isIncome}) {
     final _formKey = GlobalKey<FormState>();
     final _amountController = TextEditingController();
     final _noteController = TextEditingController();
@@ -644,18 +717,36 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     bool _isIncome = isIncome;
     List<String> _imagePaths = [];
     final theme = Theme.of(context);
-    final isDark = Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
-   // final overlayKey = GlobalKey<SuccessOverlayState>();
+    final isDark =
+        Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
+    // final overlayKey = GlobalKey<SuccessOverlayState>();
     Transaction? _lastAddedTx;
 
     // Predefined categories
     final List<String> incomeCategories = [
-      "Salary", "Freelance", "Investment", "Gift", "Refund", "Other"
+      "Salary",
+      "Freelance",
+      "Investment",
+      "Gift",
+      "Refund",
+      "Other"
     ];
     final List<String> expenseCategories = [
-      "Food", "Transport", "Shopping", "Bills", "Entertainment", "Health", "Education", "Other"
+      "Food",
+      "Transport",
+      "Shopping",
+      "Bills",
+      "Entertainment",
+      "Health",
+      "Education",
+      "Other"
     ];
-    final List<String> accounts = ["Cash", "Bank", "Credit Card", "Digital Wallet"];
+    final List<String> accounts = [
+      "Cash",
+      "Bank",
+      "Credit Card",
+      "Digital Wallet"
+    ];
 
     showModalBottomSheet(
       context: context,
@@ -670,7 +761,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ),
         child: Center(
           child: ConstrainedBox(
-
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.9,
               minWidth: 320,
@@ -679,7 +769,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               color: theme.dialogBackgroundColor,
               borderRadius: const BorderRadius.all(Radius.circular(28)),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                 child: Form(
                   key: _formKey,
                   child: SingleChildScrollView(
@@ -705,7 +796,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             ),
                             const Spacer(),
                             IconButton(
-                              icon: Icon(Icons.close, color: theme.colorScheme.onSurface.withOpacity(0.7)),
+                              icon: Icon(Icons.close,
+                                  color: theme.colorScheme.onSurface
+                                      .withOpacity(0.7)),
                               onPressed: () => Navigator.pop(context),
                               tooltip: 'Close',
                             ),
@@ -741,10 +834,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                     children: [
                                       Expanded(
                                         child: ListView.separated(
-
                                           scrollDirection: Axis.horizontal,
                                           itemCount: _imagePaths.length + 1,
-                                          separatorBuilder: (_, __) => const SizedBox(width: 12),
+                                          separatorBuilder: (_, __) =>
+                                              const SizedBox(width: 12),
                                           itemBuilder: (context, idx) {
                                             if (idx < _imagePaths.length) {
                                               final path = _imagePaths[idx];
@@ -756,28 +849,46 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                       showDialog(
                                                         context: context,
                                                         builder: (_) => Dialog(
-                                                          backgroundColor: Colors.black,
-                                                          insetPadding: EdgeInsets.zero,
-                                                          child: InteractiveViewer(
+                                                          backgroundColor:
+                                                              Colors.black,
+                                                          insetPadding:
+                                                              EdgeInsets.zero,
+                                                          child:
+                                                              InteractiveViewer(
                                                             child: Image.file(
                                                               File(path),
-                                                              fit: BoxFit.contain,
-                                                              filterQuality: FilterQuality.high,
+                                                              fit: BoxFit
+                                                                  .contain,
+                                                              filterQuality:
+                                                                  FilterQuality
+                                                                      .high,
                                                             ),
                                                           ),
                                                         ),
                                                       );
                                                     },
                                                     child: ClipRRect(
-                                                      borderRadius: BorderRadius.circular(16),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              16),
                                                       child: Container(
-                                                        decoration: BoxDecoration(
-                                                          border: Border.all(color: Colors.grey.withOpacity(0.18), width: 1),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          border: Border.all(
+                                                              color: Colors.grey
+                                                                  .withOpacity(
+                                                                      0.18),
+                                                              width: 1),
                                                           boxShadow: [
                                                             BoxShadow(
-                                                              color: Colors.black.withOpacity(0.08),
+                                                              color: Colors
+                                                                  .black
+                                                                  .withOpacity(
+                                                                      0.08),
                                                               blurRadius: 8,
-                                                              offset: const Offset(0, 4),
+                                                              offset:
+                                                                  const Offset(
+                                                                      0, 4),
                                                             ),
                                                           ],
                                                         ),
@@ -797,39 +908,69 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                       children: [
                                                         GestureDetector(
                                                           onTap: () async {
-                                                            final ImagePicker picker = ImagePicker();
-                                                            final XFile? image = await picker.pickImage(
-                                                              source: ImageSource.gallery
-                                                            );
+                                                            final ImagePicker
+                                                                picker =
+                                                                ImagePicker();
+                                                            final XFile? image =
+                                                                await picker.pickImage(
+                                                                    source: ImageSource
+                                                                        .gallery);
                                                             if (image != null) {
                                                               setState(() {
-                                                                _imagePaths[idx] = image.path;
+                                                                _imagePaths[
+                                                                        idx] =
+                                                                    image.path;
                                                               });
                                                             }
                                                           },
                                                           child: Container(
-                                                            decoration: BoxDecoration(
-                                                              color: Colors.black.withOpacity(0.6),
-                                                              shape: BoxShape.circle,
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color: Colors
+                                                                  .black
+                                                                  .withOpacity(
+                                                                      0.6),
+                                                              shape: BoxShape
+                                                                  .circle,
                                                             ),
-                                                            padding: const EdgeInsets.all(2),
-                                                            child: const Icon(Icons.edit, color: Colors.white, size: 16),
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(2),
+                                                            child: const Icon(
+                                                                Icons.edit,
+                                                                color: Colors
+                                                                    .white,
+                                                                size: 16),
                                                           ),
                                                         ),
-                                                        const SizedBox(width: 4),
+                                                        const SizedBox(
+                                                            width: 4),
                                                         GestureDetector(
                                                           onTap: () {
                                                             setState(() {
-                                                              _imagePaths.removeAt(idx);
+                                                              _imagePaths
+                                                                  .removeAt(
+                                                                      idx);
                                                             });
                                                           },
                                                           child: Container(
-                                                            decoration: BoxDecoration(
-                                                              color: Colors.black.withOpacity(0.6),
-                                                              shape: BoxShape.circle,
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color: Colors
+                                                                  .black
+                                                                  .withOpacity(
+                                                                      0.6),
+                                                              shape: BoxShape
+                                                                  .circle,
                                                             ),
-                                                            padding: const EdgeInsets.all(2),
-                                                            child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .all(2),
+                                                            child: const Icon(
+                                                                Icons.close,
+                                                                color: Colors
+                                                                    .white,
+                                                                size: 16),
                                                           ),
                                                         ),
                                                       ],
@@ -841,47 +982,80 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                               // Add Image button
                                               return GestureDetector(
                                                 onTap: () async {
-                                                  final ImagePicker picker = ImagePicker();
-                                                  final XFile? image = await picker.pickImage(
-                                                    source: ImageSource.gallery
-                                                  );
+                                                  final ImagePicker picker =
+                                                      ImagePicker();
+                                                  final XFile? image =
+                                                      await picker.pickImage(
+                                                          source: ImageSource
+                                                              .gallery);
                                                   if (image != null) {
                                                     setState(() {
-                                                      _imagePaths.add(image.path);
+                                                      _imagePaths
+                                                          .add(image.path);
                                                     });
                                                   }
                                                 },
                                                 child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.center,
                                                   children: [
                                                     Container(
-                                                      alignment: Alignment.center,
+                                                      alignment:
+                                                          Alignment.center,
                                                       width: 110,
                                                       height: 50,
                                                       decoration: BoxDecoration(
-                                                        color: theme.colorScheme.surface,
-                                                        borderRadius: BorderRadius.circular(20),
+                                                        color: theme.colorScheme
+                                                            .surface,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(20),
                                                         border: Border.all(
-                                                          color: theme.colorScheme.primary.withOpacity(0.3),
+                                                          color: theme
+                                                              .colorScheme
+                                                              .primary
+                                                              .withOpacity(0.3),
                                                           width: 1,
                                                         ),
                                                         boxShadow: [
                                                           BoxShadow(
-                                                            color: Colors.black.withOpacity(0.04),
+                                                            color: Colors.black
+                                                                .withOpacity(
+                                                                    0.04),
                                                             blurRadius: 4,
-                                                            offset: const Offset(0, 2),
+                                                            offset:
+                                                                const Offset(
+                                                                    0, 2),
                                                           ),
                                                         ],
                                                       ),
                                                       child: Row(
-                                                        mainAxisAlignment: MainAxisAlignment.center,
-                                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .center,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .center,
                                                         children: [
-                                                          const SizedBox(width: 10),
-                                                          Icon(Icons.camera_alt_outlined, color: theme.colorScheme.primary, size: 18),
-                                                          const SizedBox(width: 6),
-                                                          Text("Add Image", style: TextStyle(fontSize: 12, color: theme.colorScheme.primary)),
+                                                          const SizedBox(
+                                                              width: 10),
+                                                          Icon(
+                                                              Icons
+                                                                  .camera_alt_outlined,
+                                                              color: theme
+                                                                  .colorScheme
+                                                                  .primary,
+                                                              size: 18),
+                                                          const SizedBox(
+                                                              width: 6),
+                                                          Text("Add Image",
+                                                              style: TextStyle(
+                                                                  fontSize: 12,
+                                                                  color: theme
+                                                                      .colorScheme
+                                                                      .primary)),
                                                         ],
                                                       ),
                                                     ),
@@ -923,8 +1097,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             filled: true,
                             fillColor: theme.colorScheme.surface,
                           ),
-                          items: (isIncome ? incomeCategories : expenseCategories)
-                              .map((e) => DropdownMenuItem(
+                          items:
+                              (isIncome ? incomeCategories : expenseCategories)
+                                  .map((e) => DropdownMenuItem(
                                     value: e,
                                     child: Text(e),
                                   ))
@@ -967,40 +1142,50 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   },
                   child: Text(
                     "Cancel",
-                    style: TextStyle(color: theme.colorScheme.primary),
-                  ),
+                                style:
+                                    TextStyle(color: theme.colorScheme.primary),
+                              ),
                 ),
                             const SizedBox(width: 8),
                 ElevatedButton.icon(
                   icon: Icon(isIncome ? Icons.add : Icons.remove),
-                  label: Text(isIncome ? "Add Income" : "Add Expense"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isIncome ? Colors.green : Colors.red,
-                    foregroundColor: Colors.white,
+                              label:
+                                  Text(isIncome ? "Add Income" : "Add Expense"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    isIncome ? Colors.green : Colors.red,
+                                foregroundColor: Colors.white,
                   ),
                   onPressed: () {
                     HapticFeedback.lightImpact();
                     if (_formKey.currentState!.validate()) {
                       final tx = Transaction(
-                        amount: double.parse(_amountController.text),
-                        note: _noteController.text,
+                                    amount:
+                                        double.parse(_amountController.text),
+                                    note: _noteController.text,
                         category: _category,
                         account: _account,
                         date: DateTime.now(),
                         isIncome: _isIncome,
-                                    imagePaths: _imagePaths.isNotEmpty ? List<String>.from(_imagePaths) : null,
-                      );
-                      Provider.of<TransactionProvider>(context, listen: false)
-                          .addTransaction(tx);
+                                    imagePaths: _imagePaths.isNotEmpty
+                                        ? List<String>.from(_imagePaths)
+                                        : null,
+                                  );
+                                  Provider.of<TransactionProvider>(context,
+                                          listen: false)
+                                      .addTransaction(tx);
                                   _lastAddedTx = tx;
                       _checkAndAddPersonTransactions(tx);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            isIncome ? "Income added successfully!" : "Expense added successfully!",
-                          ),
-                          backgroundColor: isIncome ? Colors.green : Colors.red,
-                          behavior: SnackBarBehavior.floating,
+                                        isIncome
+                                            ? "Income added successfully!"
+                                            : "Expense added successfully!",
+                                      ),
+                                      backgroundColor:
+                                          isIncome ? Colors.green : Colors.red,
+                                      behavior: SnackBarBehavior.floating,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -1009,8 +1194,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             label: 'Undo',
                             textColor: Colors.white,
                             onPressed: () {
-                              Provider.of<TransactionProvider>(context, listen: false)
-                                  .deleteTransaction(_lastAddedTx!);
+                                          Provider.of<TransactionProvider>(
+                                                  context,
+                                                  listen: false)
+                                              .deleteTransaction(_lastAddedTx!);
                             },
                           ),
                         ),
@@ -1018,8 +1205,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                   if (Navigator.canPop(context)) {
                       Navigator.pop(context);
                                   }
-
-
                     }
                   },
                 ),
@@ -1081,7 +1266,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   }
 
   void _showAnalyticsDialog(BuildContext context) {
-    final transactionProvider = Provider.of<TransactionProvider>(context, listen: false);
+    final transactionProvider =
+        Provider.of<TransactionProvider>(context, listen: false);
     final totalIncome = transactionProvider.totalIncome;
     final totalSpend = transactionProvider.totalSpend;
     final count = transactionProvider.transactions.length;
@@ -1104,15 +1290,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           children: [
             Text("Total Transactions: $count", style: TextStyle(fontSize: 16)),
             const SizedBox(height: 8),
-            Text("Total Income: ₹${totalIncome.toStringAsFixed(2)}", style: TextStyle(fontSize: 16, color: Colors.green)),
+            Text("Total Income: ₹${totalIncome.toStringAsFixed(2)}",
+                style: TextStyle(fontSize: 16, color: Colors.green)),
             const SizedBox(height: 8),
-            Text("Total Expenses: ₹${totalSpend.toStringAsFixed(2)}", style: TextStyle(fontSize: 16, color: Colors.red)),
+            Text("Total Expenses: ₹${totalSpend.toStringAsFixed(2)}",
+                style: TextStyle(fontSize: 16, color: Colors.red)),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text("Close", style: TextStyle(color: theme.colorScheme.primary)),
+            child: Text("Close",
+                style: TextStyle(color: theme.colorScheme.primary)),
           ),
         ],
       ),

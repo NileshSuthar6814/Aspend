@@ -21,6 +21,8 @@ import '../providers/person_transaction_provider.dart';
 import '../providers/transaction_provider.dart';
 import '../services/pdf_service.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:local_auth/local_auth.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -30,12 +32,35 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  bool _appLockEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppLockSetting();
+  }
+
+  Future<void> _loadAppLockSetting() async {
+    final box = await Hive.openBox('settings');
+    setState(() {
+      _appLockEnabled = box.get('appLockEnabled', defaultValue: false);
+    });
+  }
+
+  Future<void> _setAppLockEnabled(bool enabled) async {
+    final box = await Hive.openBox('settings');
+    await box.put('appLockEnabled', enabled);
+    setState(() {
+      _appLockEnabled = enabled;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = context.watch<AppThemeProvider>().isDarkMode;
     final useAdaptive = context.watch<AppThemeProvider>().useAdaptiveColor;
-    
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: CustomScrollView(
@@ -64,22 +89,33 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: useAdaptive
-                        ? LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [theme.colorScheme.primary, theme.colorScheme.primaryContainer],
-                          )
-                        : isDark
                           ? LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                theme.colorScheme.primary,
+                                theme.colorScheme.primaryContainer
+                              ],
                             )
-                          : LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
-                            ),
+                          : isDark
+                              ? LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    theme.colorScheme.primary.withOpacity(0.8),
+                                    theme.colorScheme.primaryContainer
+                                        .withOpacity(0.8)
+                                  ],
+                                )
+                              : LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    theme.colorScheme.primary.withOpacity(0.8),
+                                    theme.colorScheme.primaryContainer
+                                        .withOpacity(0.8)
+                                  ],
+                                ),
                     ),
                   ),
                 ),
@@ -87,7 +123,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             centerTitle: true,
           ),
-          
+
           // Settings Content
           SliverToBoxAdapter(
             child: Padding(
@@ -99,9 +135,14 @@ class _SettingsPageState extends State<SettingsPage> {
                   _buildSectionHeader("Appearance", Icons.palette),
                   const SizedBox(height: 10),
                   _buildThemeCard(context, isDark),
+                  if (!useAdaptive) ...[
+                    const SizedBox(height: 12),
+                    _buildColorPickerTile(context),
+                  ],
                   const SizedBox(height: 12),
                   _buildAdaptiveColorSwitch(context),
                   const SizedBox(height: 18),
+                  _buildAppLockSection(context),
                   // Backup & Export Section
                   _buildSectionHeader("Backup & Export", Icons.backup),
                   const SizedBox(height: 10),
@@ -116,7 +157,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   _buildSectionHeader("App Information", Icons.info),
                   const SizedBox(height: 10),
                   _buildAppInfoSection(context, isDark),
-                  const SizedBox(height: 8 ),
+                  const SizedBox(height: 8),
                   // Add developer credit at the very bottom
                   Center(
                     child: Padding(
@@ -158,7 +199,8 @@ class _SettingsPageState extends State<SettingsPage> {
           style: GoogleFonts.nunito(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: useAdaptive ? theme.colorScheme.primary : Colors.teal.shade700,
+            color:
+                useAdaptive ? theme.colorScheme.primary : Colors.teal.shade700,
           ),
         ),
       ],
@@ -177,7 +219,11 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             Row(
               children: [
-                Icon(Icons.palette, size: 24, color: useAdaptive ? theme.colorScheme.primary : Colors.teal.shade600),
+                Icon(Icons.palette,
+                    size: 24,
+                    color: useAdaptive
+                        ? theme.colorScheme.primary
+                        : Colors.teal.shade600),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -255,6 +301,101 @@ class _SettingsPageState extends State<SettingsPage> {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildColorPickerTile(BuildContext context) {
+    final provider = context.watch<AppThemeProvider>();
+    final currentColor = provider.customSeedColor ?? Colors.teal;
+    return _buildSettingsTile(
+      icon: Icons.color_lens,
+      title: "App Color",
+      subtitle: "Select a custom app color",
+      onTap: () async {
+        Color selectedColor = currentColor;
+        await showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Pick App Color'),
+              content: SingleChildScrollView(
+                child: ColorPicker(
+                  pickerColor: selectedColor,
+                  onColorChanged: (color) {
+                    selectedColor = color;
+                  },
+                  enableAlpha: false,
+                  showLabel: false,
+                  pickerAreaHeightPercent: 0.7,
+                ),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('Reset'),
+                  onPressed: () {
+                    provider.setCustomSeedColor(null);
+                    Navigator.of(context).pop();
+                    _showSnackBar(context, 'App color reset to default!');
+                  },
+                ),
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                ElevatedButton(
+                  child: const Text('Select'),
+                  onPressed: () {
+                    provider.setCustomSeedColor(selectedColor);
+                    Navigator.of(context).pop();
+                    _showSnackBar(context, 'App color updated!');
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildAppLockSection(BuildContext context) {
+    return _buildSettingsTile(
+      icon: Icons.lock,
+      title: "App Lock",
+      subtitle: "Require device authentication to open app",
+      onTap: null,
+      trailing: Switch(
+        value: _appLockEnabled,
+        onChanged: (value) async {
+          final localAuth = LocalAuthentication();
+          try {
+            if (value) {
+              final canCheck = await localAuth.canCheckBiometrics ||
+                  await localAuth.isDeviceSupported();
+              if (!canCheck) {
+                _showSnackBar(context,
+                    'Device does not support biometrics or device authentication.');
+                return;
+              }
+              final didAuthenticate = await localAuth.authenticate(
+                localizedReason: 'Enable app lock',
+                options: const AuthenticationOptions(
+                    biometricOnly: false, stickyAuth: true),
+              );
+              if (!didAuthenticate) {
+                _showSnackBar(
+                    context, 'Authentication failed. App lock not enabled.');
+                return;
+              }
+            }
+            await _setAppLockEnabled(value);
+            _showSnackBar(
+                context, value ? 'App lock enabled.' : 'App lock disabled.');
+          } catch (e) {
+            _showSnackBar(context, 'Error: \n$e');
+          }
+        },
+      ),
     );
   }
 
@@ -377,7 +518,6 @@ class _SettingsPageState extends State<SettingsPage> {
             _confirmResetIntro(context);
           },
         ),
-
       ],
     );
   }
@@ -419,69 +559,57 @@ class _SettingsPageState extends State<SettingsPage> {
     required String subtitle,
     required VoidCallback? onTap,
     bool isDestructive = false,
+    Widget? trailing,
   }) {
     final theme = Theme.of(context);
     final isDark = context.watch<AppThemeProvider>().isDarkMode;
     return ZoomTapAnimation(
       onTap: onTap,
       child: Card(
-      elevation: 1,
-      margin: const EdgeInsets.only(bottom: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        leading: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: isDestructive 
-                ? Colors.red.withOpacity(0.1)
-                : Colors.teal.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isDestructive 
-                  ? Colors.red.withOpacity(0.3)
-                  : Colors.teal.withOpacity(0.3),
-              width: 1,
+        elevation: 1,
+        margin: const EdgeInsets.only(bottom: 6),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: ListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          leading: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: isDestructive
+                  ? Colors.red.withOpacity(0.1)
+                  : Colors.teal.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isDestructive
+                    ? Colors.red.withOpacity(0.3)
+                    : Colors.teal.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Icon(
+              icon,
+              color: isDestructive ? Colors.red : Colors.teal,
+              size: 18,
             ),
           ),
-          child: Icon(
-            icon,
-            color: isDestructive ? Colors.red : Colors.teal,
-            size: 18,
+          title: Text(
+            title,
+            style: GoogleFonts.nunito(
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
+              color: isDestructive ? Colors.red : null,
+            ),
           ),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.nunito(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-            color: isDestructive ? Colors.red : null,
+          subtitle: Text(
+            subtitle,
+            style: GoogleFonts.nunito(
+              fontSize: 13,
+              color: Colors.grey.shade600,
+            ),
           ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: GoogleFonts.nunito(
-            fontSize: 13,
-            color: Colors.grey.shade600,
-          ),
-        ),
-        trailing: onTap != null 
-            ? Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(
-                  Icons.arrow_forward_ios,
-                  size: 14,
-                  color: Colors.grey.shade400,
-                ),
-              )
-            : null,
-        onTap: onTap,
+          trailing: trailing,
+          onTap: onTap,
         ),
       ),
     );
@@ -502,9 +630,10 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _confirmDeleteAll(BuildContext context) {
-    final isDark = Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
+    final isDark =
+        Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
     final theme = Theme.of(context);
-    
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -556,13 +685,15 @@ class _SettingsPageState extends State<SettingsPage> {
                     .deleteAllData();
                 await Provider.of<PersonProvider>(context, listen: false)
                     .deleteAllData();
-                await Provider.of<PersonTransactionProvider>(context, listen: false)
+                await Provider.of<PersonTransactionProvider>(context,
+                        listen: false)
                     .deleteAllData();
                 Navigator.pop(context);
                 _showSnackBar(context, "All data deleted successfully!");
               } catch (e) {
                 Navigator.pop(context);
-                _showSnackBar(context, "Failed to delete all data. Please try again.");
+                _showSnackBar(
+                    context, "Failed to delete all data. Please try again.");
               }
             },
           ),
@@ -572,9 +703,10 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _confirmResetIntro(BuildContext context) async {
-    final isDark = Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
+    final isDark =
+        Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
     final theme = Theme.of(context);
-    
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -629,7 +761,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 _showSnackBar(context, "Intro reset successfully!");
               } catch (e) {
                 Navigator.pop(context);
-                _showSnackBar(context, "Failed to reset intro. Please try again.\n$e");
+                _showSnackBar(
+                    context, "Failed to reset intro. Please try again.\n$e");
               }
             },
           ),

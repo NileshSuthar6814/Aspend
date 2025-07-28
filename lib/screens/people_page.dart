@@ -58,9 +58,10 @@ class _PeopleTabState extends State<PeopleTab> {
     showDialog(
       context: context,
       builder: (_) => StatefulBuilder(
-        builder: (context, setStateDialog) => AlertDialog( // Changed setState to setStateDialog
+        builder: (context, setStateDialog) => AlertDialog(
+          // Changed setState to setStateDialog
           shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
             'Add New Person',
             style: GoogleFonts.nunito(
@@ -81,7 +82,8 @@ class _PeopleTabState extends State<PeopleTab> {
                   );
 
                   if (image != null) {
-                    setStateDialog(() { // Changed setState to setStateDialog
+                    setStateDialog(() {
+                      // Changed setState to setStateDialog
                       selectedPhotoPath = image.path;
                     });
                   }
@@ -103,33 +105,33 @@ class _PeopleTabState extends State<PeopleTab> {
                   ),
                   child: selectedPhotoPath != null
                       ? ClipRRect(
-                    borderRadius: BorderRadius.circular(48),
-                    child: Image.file(
-                      File(selectedPhotoPath!),
-                      width: 96,
-                      height: 96,
-                      fit: BoxFit.cover,
-                    ),
-                  )
+                          borderRadius: BorderRadius.circular(48),
+                          child: Image.file(
+                            File(selectedPhotoPath!),
+                            width: 96,
+                            height: 96,
+                            fit: BoxFit.cover,
+                          ),
+                        )
                       : Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.add_a_photo,
-                        size: 30,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Add Photo',
-                        style: GoogleFonts.nunito(
-                          fontSize: 12,
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w600,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.add_a_photo,
+                              size: 30,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Add Photo',
+                              style: GoogleFonts.nunito(
+                                fontSize: 12,
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
               const SizedBox(height: 20),
@@ -181,7 +183,7 @@ class _PeopleTabState extends State<PeopleTab> {
                 if (name.isNotEmpty) {
                   HapticFeedback.lightImpact();
                   final person =
-                  Person(name: name, photoPath: selectedPhotoPath);
+                      Person(name: name, photoPath: selectedPhotoPath);
                   context.read<PersonProvider>().addPerson(person);
                   Navigator.pop(context);
                 }
@@ -194,7 +196,7 @@ class _PeopleTabState extends State<PeopleTab> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 ),
                 child: Text(
                   'Add Person',
@@ -212,9 +214,9 @@ class _PeopleTabState extends State<PeopleTab> {
   // NEW: Helper widget for the summary info at the top
   Widget _buildSummaryInfo(BuildContext context,
       {required String label,
-        required double amount,
-        required Color color,
-        required IconData icon}) {
+      required double amount,
+      required Color color,
+      required IconData icon}) {
     final theme = Theme.of(context);
     return Expanded(
       child: Column(
@@ -295,30 +297,32 @@ class _PeopleTabState extends State<PeopleTab> {
                     decoration: BoxDecoration(
                       gradient: useAdaptive
                           ? LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          theme.colorScheme.primary,
-                          theme.colorScheme.primaryContainer
-                        ],
-                      )
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                theme.colorScheme.primary,
+                                theme.colorScheme.primaryContainer
+                              ],
+                            )
                           : isDark
-                          ? LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.teal.shade900.withOpacity(0.8),
-                          Colors.teal.shade700.withOpacity(0.8)
-                        ],
-                      )
-                          : LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.teal.shade100.withOpacity(0.8),
-                          Colors.teal.shade200.withOpacity(0.8)
-                        ],
-                      ),
+                              ? LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    theme.colorScheme.primary.withOpacity(0.8),
+                                    theme.colorScheme.primaryContainer
+                                        .withOpacity(0.8)
+                                  ],
+                                )
+                              : LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    theme.colorScheme.primary.withOpacity(0.8),
+                                    theme.colorScheme.primaryContainer
+                                        .withOpacity(0.8)
+                                  ],
+                                ),
                     ),
                   ),
                 ),
@@ -333,7 +337,8 @@ class _PeopleTabState extends State<PeopleTab> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 8.0),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 12.0),
                   decoration: BoxDecoration(
                       color: theme.cardColor.withOpacity(0.85),
                       borderRadius: BorderRadius.circular(14),
@@ -347,8 +352,7 @@ class _PeopleTabState extends State<PeopleTab> {
                       border: Border.all(
                         color: theme.colorScheme.outline.withOpacity(0.2),
                         width: 1,
-                      )
-                  ),
+                      )),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -426,7 +430,7 @@ class _PeopleTabState extends State<PeopleTab> {
           else
             SliverList(
               delegate: SliverChildBuilderDelegate(
-                    (context, index) {
+                (context, index) {
                   final person = people[index];
                   final total = personProvider.totalFor(person.name);
                   final isPositive = total >= 0;
@@ -448,19 +452,20 @@ class _PeopleTabState extends State<PeopleTab> {
                             color: useAdaptive
                                 ? theme.colorScheme.primary.withOpacity(0.08)
                                 : isDark
-                                ? Colors.teal.shade900.withOpacity(0.08)
-                                : Colors.teal.withOpacity(0.08),
+                                    ? Colors.teal.shade900.withOpacity(0.08)
+                                    : Colors.teal.withOpacity(0.08),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: useAdaptive
                                   ? theme.colorScheme.primary.withOpacity(0.22)
                                   : isDark
-                                  ? Colors.teal.shade900.withOpacity(0.22)
-                                  : Colors.teal.withOpacity(0.22),
+                                      ? Colors.teal.shade900.withOpacity(0.22)
+                                      : Colors.teal.withOpacity(0.22),
                               width: 1,
                             ),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 12),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -471,35 +476,37 @@ class _PeopleTabState extends State<PeopleTab> {
                                   color: person.photoPath != null
                                       ? Colors.transparent
                                       : useAdaptive
-                                      ? theme.colorScheme.primary.withOpacity(0.1)
-                                      : Colors.teal.withOpacity(0.1),
+                                          ? theme.colorScheme.primary
+                                              .withOpacity(0.1)
+                                          : Colors.teal.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(30),
                                   border: person.photoPath != null
                                       ? Border.all(
-                                    color: useAdaptive
-                                        ? theme.colorScheme.primary.withOpacity(0.3)
-                                        : Colors.teal.withOpacity(0.3),
-                                    width: 1,
-                                  )
+                                          color: useAdaptive
+                                              ? theme.colorScheme.primary
+                                                  .withOpacity(0.3)
+                                              : Colors.teal.withOpacity(0.3),
+                                          width: 1,
+                                        )
                                       : null,
                                 ),
                                 child: person.photoPath != null
                                     ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(28),
-                                  child: Image.file(
-                                    File(person.photoPath!),
-                                    width: 56,
-                                    height: 56,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
+                                        borderRadius: BorderRadius.circular(28),
+                                        child: Image.file(
+                                          File(person.photoPath!),
+                                          width: 56,
+                                          height: 56,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      )
                                     : Icon(
-                                  Icons.person,
-                                  color: useAdaptive
-                                      ? theme.colorScheme.primary
-                                      : Colors.teal,
-                                  size: 30,
-                                ),
+                                        Icons.person,
+                                        color: useAdaptive
+                                            ? theme.colorScheme.primary
+                                            : Colors.teal,
+                                        size: 30,
+                                      ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -564,15 +571,14 @@ class _PeopleTabState extends State<PeopleTab> {
                               ),
                             ],
                           ),
-
                         ),
-                      )
-                  );
+                      ));
                 },
                 childCount: people.length,
               ),
             ),
-          SliverToBoxAdapter(child: SizedBox(height: 80)), // Your existing SizedBox
+          SliverToBoxAdapter(
+              child: SizedBox(height: 80)), // Your existing SizedBox
         ],
       ),
       floatingActionButton: people.isEmpty
@@ -614,7 +620,10 @@ class _PeopleTabState extends State<PeopleTab> {
                 label: Text(
                   'Add Person',
                   style: GoogleFonts.nunito(
-                      fontSize: 16, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface), // Added color for visibility if surface is transparent
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme
+                          .onSurface), // Added color for visibility if surface is transparent
                 ),
               ),
             ),

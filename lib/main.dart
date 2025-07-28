@@ -26,8 +26,9 @@ import 'providers/transaction_provider.dart';
 import 'providers/theme_provider.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
 //import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
+import 'package:local_auth/local_auth.dart';
 
-// 
+//
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
@@ -40,20 +41,23 @@ void main() async {
   // Ensure all Hive boxes are opened before running the app
   try {
     await Future.wait([
-      if (!Hive.isBoxOpen('transactions')) Hive.openBox<Transaction>('transactions'),
+      if (!Hive.isBoxOpen('transactions'))
+        Hive.openBox<Transaction>('transactions'),
       if (!Hive.isBoxOpen('balanceBox')) Hive.openBox<double>('balanceBox'),
       if (!Hive.isBoxOpen('settings')) Hive.openBox('settings'),
       if (!Hive.isBoxOpen('people')) Hive.openBox<Person>('people'),
-      if (!Hive.isBoxOpen('personTransactions')) Hive.openBox<PersonTransaction>('personTransactions'),
+      if (!Hive.isBoxOpen('personTransactions'))
+        Hive.openBox<PersonTransaction>('personTransactions'),
     ]);
-    
+
     print('All Hive boxes initialized successfully');
   } catch (e) {
     print('Error initializing Hive boxes: $e');
     runApp(MaterialApp(
       home: Scaffold(
         body: Center(
-          child: Text('Failed to initialize local storage: \n\n$e',
+          child: Text(
+            'Failed to initialize local storage: \n\n$e',
             style: TextStyle(color: Colors.red, fontSize: 16),
             textAlign: TextAlign.center,
           ),
@@ -107,19 +111,32 @@ class MyApp extends StatelessWidget {
         final themeProvider = context.watch<AppThemeProvider>();
 
         final useAdaptive = themeProvider.useAdaptiveColor;
-        final lightSchemeFinal = useAdaptive ? (lightDynamic ?? ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.light)) : ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.light);
-        final darkSchemeFinal = useAdaptive ? (darkDynamic ?? ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.dark)) : ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.dark);
+        final customSeedColor = themeProvider.customSeedColor ?? Colors.teal;
+        final lightSchemeFinal = useAdaptive
+            ? (lightDynamic ??
+                ColorScheme.fromSeed(
+                    seedColor: customSeedColor, brightness: Brightness.light))
+            : ColorScheme.fromSeed(
+                seedColor: customSeedColor, brightness: Brightness.light);
+        final darkSchemeFinal = useAdaptive
+            ? (darkDynamic ??
+                ColorScheme.fromSeed(
+                    seedColor: customSeedColor, brightness: Brightness.dark))
+            : ColorScheme.fromSeed(
+                seedColor: customSeedColor, brightness: Brightness.dark);
 
         ThemeData lightTheme = ThemeData(
           colorScheme: lightSchemeFinal,
           useMaterial3: true,
           fontFamily: 'NFont',
-          textTheme: GoogleFonts.nunitoTextTheme(lightSchemeFinal.brightness == Brightness.dark
-              ? ThemeData.dark().textTheme
-              : ThemeData.light().textTheme),
+          textTheme: GoogleFonts.nunitoTextTheme(
+              lightSchemeFinal.brightness == Brightness.dark
+                  ? ThemeData.dark().textTheme
+                  : ThemeData.light().textTheme),
           cardTheme: CardThemeData(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             color: lightSchemeFinal.surface,
           ),
           inputDecorationTheme: InputDecorationTheme(
@@ -129,7 +146,8 @@ class MyApp extends StatelessWidget {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: lightSchemeFinal.outline.withOpacity(0.5)),
+              borderSide:
+                  BorderSide(color: lightSchemeFinal.outline.withOpacity(0.5)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -141,7 +159,8 @@ class MyApp extends StatelessWidget {
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
               elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
           ),
@@ -151,12 +170,14 @@ class MyApp extends StatelessWidget {
           colorScheme: darkSchemeFinal,
           useMaterial3: true,
           fontFamily: 'NFont',
-          textTheme: GoogleFonts.nunitoTextTheme(darkSchemeFinal.brightness == Brightness.dark
-              ? ThemeData.dark().textTheme
-              : ThemeData.light().textTheme),
+          textTheme: GoogleFonts.nunitoTextTheme(
+              darkSchemeFinal.brightness == Brightness.dark
+                  ? ThemeData.dark().textTheme
+                  : ThemeData.light().textTheme),
           cardTheme: CardThemeData(
             elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             color: darkSchemeFinal.surface,
           ),
           inputDecorationTheme: InputDecorationTheme(
@@ -166,7 +187,8 @@ class MyApp extends StatelessWidget {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: darkSchemeFinal.outline.withOpacity(0.5)),
+              borderSide:
+                  BorderSide(color: darkSchemeFinal.outline.withOpacity(0.5)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -178,7 +200,8 @@ class MyApp extends StatelessWidget {
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
               elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
           ),
@@ -226,7 +249,8 @@ class _SplashScreenState extends State<SplashScreen>
     _scale = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
     );
-    _slide = Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+    _slide =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
     );
     _controller.forward();
@@ -243,16 +267,24 @@ class _SplashScreenState extends State<SplashScreen>
         print('SplashScreen: Not launched from widget, checking intro');
         final box = await Hive.openBox('settings');
         final introCompleted = box.get('introCompleted', defaultValue: false);
-        print('SplashScreen: introCompleted = '
-            + introCompleted.toString());
-        Future.delayed(const Duration(seconds: 2), () {
+        final appLockEnabled = box.get('appLockEnabled', defaultValue: false);
+        print('SplashScreen: introCompleted = ' + introCompleted.toString());
+        Future.delayed(const Duration(seconds: 2), () async {
+          if (appLockEnabled) {
+            final localAuth = LocalAuthentication();
+            final didAuthenticate = await localAuth.authenticate(
+              localizedReason: 'Authenticate to access Aspends Tracker',
+              options: const AuthenticationOptions(
+                  biometricOnly: false, stickyAuth: true),
+            );
+            if (!didAuthenticate) return;
+          }
           print('SplashScreen: Navigating to next screen');
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => introCompleted
-                  ? const RootNavigation()
-                  : const IntroPage(),
+              builder: (_) =>
+                  introCompleted ? const RootNavigation() : const IntroPage(),
             ),
           );
         });
@@ -269,20 +301,24 @@ class _SplashScreenState extends State<SplashScreen>
       body: Container(
         decoration: BoxDecoration(
           gradient: useAdaptive
-            ? LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [theme.colorScheme.primary, theme.colorScheme.primaryContainer, theme.colorScheme.secondary],
-              )
-            : LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.teal.shade400,
-                  Colors.teal.shade700,
-                  Colors.teal.shade900,
-                ],
-              ),
+              ? LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    theme.colorScheme.primary,
+                    theme.colorScheme.primaryContainer,
+                    theme.colorScheme.secondary
+                  ],
+                )
+              : LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.teal.shade400,
+                    Colors.teal.shade700,
+                    Colors.teal.shade900,
+                  ],
+                ),
         ),
         child: Center(
           child: FadeTransition(
@@ -338,12 +374,10 @@ class _SplashScreenState extends State<SplashScreen>
                     SizedBox(
                       width: 40,
                       height: 40,
-                      child:LoadingAnimationWidget.halfTriangleDot(
+                      child: LoadingAnimationWidget.halfTriangleDot(
                         color: Colors.white.withOpacity(0.8),
                         size: 40,
-
                       ),
-
                     ),
                   ],
                 ),
@@ -369,7 +403,8 @@ class RootNavigation extends StatefulWidget {
   State<RootNavigation> createState() => _RootNavigationState();
 }
 
-class _RootNavigationState extends State<RootNavigation> with TickerProviderStateMixin {
+class _RootNavigationState extends State<RootNavigation>
+    with TickerProviderStateMixin {
   int _selectedIndex = 0;
   late PageController _pageController;
   late AnimationController _animationController;
@@ -398,24 +433,24 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
 
   void _onPageChanged(int index) {
     if (_selectedIndex != index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    HapticFeedback.selectionClick();
+      setState(() {
+        _selectedIndex = index;
+      });
+      HapticFeedback.selectionClick();
     }
   }
 
   void _onItemTapped(int index) {
     if (_selectedIndex != index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    HapticFeedback.lightImpact();
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+      setState(() {
+        _selectedIndex = index;
+      });
+      HapticFeedback.lightImpact();
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     }
   }
 
@@ -430,75 +465,78 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
       SettingsPage(),
     ];
     return Scaffold(
-      body:
-      FadeTransition(
-        opacity: _fadeAnimation,
-       child:
-      Stack(
-          //fit: StackFit.passthrough,
-          children: [
-            PageView(
-              controller: _pageController,
-              children: _screens,
-              onPageChanged: _onPageChanged,
-               // disable swipe if desired
-              physics: BouncingScrollPhysics(),
-              scrollBehavior: MaterialScrollBehavior(),
-            ),
-            Positioned(
-              bottom: 18,
-              left: 18,
-              right: 18,
-              height: 60,
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(width: 1, color: isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1)),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(40),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaY: 8, sigmaX: 8),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: theme.scaffoldBackgroundColor.withOpacity(0.1),
-                      ),
+        body: FadeTransition(
+      opacity: _fadeAnimation,
+      child: Stack(
+        //fit: StackFit.passthrough,
+        children: [
+          PageView(
+            controller: _pageController,
+            children: _screens,
+            onPageChanged: _onPageChanged,
+            // disable swipe if desired
+            physics: BouncingScrollPhysics(),
+            scrollBehavior: MaterialScrollBehavior(),
+          ),
+          Positioned(
+            bottom: 18,
+            left: 18,
+            right: 18,
+            height: 60,
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                    width: 1,
+                    color: isDark
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.black.withOpacity(0.1)),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(40),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaY: 8, sigmaX: 8),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: theme.scaffoldBackgroundColor.withOpacity(0.1),
                     ),
                   ),
                 ),
               ),
             ),
+          ),
 
-            /// Bottom Navigation bar items
-            Positioned(
-              bottom: 18,
-              left: 22,
-              right: 22,
-              height: 60,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  _buildBNBItem(Icons.home_outlined, 0,"Home"),
-                  _buildBNBItem(Icons.person, 1,"Person"),
-                  _buildBNBItem(Icons.auto_graph, 2,"Chart"),
-                  _buildBNBItem(Icons.settings_outlined, 3,"Setting"),
-                ],
+          /// Bottom Navigation bar items
+              Positioned(
+                bottom: 18,
+                left: 22,
+                right: 22,
+                height: 60,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    _buildBNBItem(Icons.home_outlined, 0, "Home"),
+                    _buildBNBItem(Icons.person, 1, "Person"),
+                    _buildBNBItem(Icons.auto_graph, 2, "Chart"),
+                    _buildBNBItem(Icons.settings_outlined, 3, "Setting"),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-      )
-    );
+            ],
+          ),
+        ));
   }
+
   Widget _buildBNBItem(IconData icon, index, label) {
     final isSelected = _selectedIndex == index;
     final theme = Theme.of(context);
     final isDark = context.watch<AppThemeProvider>().isDarkMode;
     return AnimatedContainer(
       alignment: Alignment.center,
-      padding: EdgeInsets.symmetric(vertical: 8, horizontal: isSelected ? 10 : 15),
+      padding:
+          EdgeInsets.symmetric(vertical: 8, horizontal: isSelected ? 10 : 15),
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeInOut,
       child: ZoomTapAnimation(
@@ -508,18 +546,24 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: isSelected ? theme.colorScheme.primary.withOpacity(0.2) : Colors.transparent,
-            border: isSelected ? Border.all(
-              color: theme.colorScheme.primary,
-              width: 0.5,
-            ) : null,
-            boxShadow: isSelected ? [
-              BoxShadow(
-                color: Colors.teal.withOpacity(0.2),
-                blurRadius: 8,
-                offset: const Offset(0, 5),
-              ),
-            ] : null,
+            color: isSelected
+                ? theme.colorScheme.primary.withOpacity(0.2)
+                : Colors.transparent,
+            border: isSelected
+                ? Border.all(
+                    color: theme.colorScheme.primary,
+                    width: 0.5,
+                  )
+                : null,
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: theme.colorScheme.primary.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 5),
+                    ),
+                  ]
+                : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -529,7 +573,9 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
                 child: Icon(
                   icon,
                   key: ValueKey(isSelected),
-                  color: isSelected ? isDark ? Colors.white: Colors.black : Colors.grey.shade600,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : Colors.grey.shade600,
                   size: isSelected ? 22 : 20,
                 ),
               ),
@@ -538,7 +584,9 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 200),
                   style: TextStyle(
-                    color:isSelected ?isDark ? Colors.white: Colors.black : Colors.grey.shade600,
+                    color: isSelected
+                        ? theme.colorScheme.primary
+                        : Colors.grey.shade600,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -717,7 +765,3 @@ class _RootNavigationState extends State<RootNavigation> with TickerProviderStat
 //* YouTube
 //* Programming with FlexZ
 //
-
-
-
-

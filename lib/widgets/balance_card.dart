@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+
 import '../providers/theme_provider.dart';
 import '../providers/transaction_provider.dart';
 
@@ -19,7 +20,8 @@ class BalanceCard extends StatefulWidget {
   State<BalanceCard> createState() => _BalanceCardState();
 }
 
-class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin {
+class _BalanceCardState extends State<BalanceCard>
+    with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
@@ -31,15 +33,15 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
     );
-    
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
-    
+
     _animationController.forward();
   }
 
@@ -55,7 +57,7 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
     final theme = Theme.of(context);
     final isDark = context.watch<AppThemeProvider>().isDarkMode;
     final useAdaptive = context.watch<AppThemeProvider>().useAdaptiveColor;
-    
+
     // Get transaction statistics
     final transactionProvider = context.watch<TransactionProvider>();
     final totalIncome = transactionProvider.transactions
@@ -81,31 +83,14 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             decoration: BoxDecoration(
-              gradient: useAdaptive
-                  ? LinearGradient(
-                      begin: Alignment.topRight,
-                      end: Alignment.bottomRight,
-                      colors: [theme.colorScheme.primaryContainer, theme.colorScheme.primaryContainer.withOpacity(0.3)],
-                    )
-                  : isDark
-                      ? LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.teal.shade900,
-                            //Colors.teal.shade850,
-                            Colors.teal.shade800,
-                          ],
-                        )
-                      : LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.teal.shade100,
-                            //Colors.teal.shade250,
-                            Colors.teal.shade200,
-                          ],
-                        ),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  theme.colorScheme.primaryContainer,
+                  theme.colorScheme.primaryContainer
+                ],
+              ),
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -141,7 +126,7 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
                     ],
                   ),
                   const SizedBox(height: 10),
-                  
+
                   // Balance Amount
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -153,8 +138,8 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
                           style: GoogleFonts.nunito(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: isPositive 
-                                ? Colors.green.shade700 
+                            color: isPositive
+                                ? Colors.green.shade700
                                 : Colors.red.shade700,
                           ),
                         ),
@@ -165,7 +150,7 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: isPositive 
+                          color: isPositive
                               ? Colors.green.withOpacity(0.2)
                               : Colors.red.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(16),
@@ -175,8 +160,8 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: isPositive 
-                                ? Colors.green.shade700 
+                            color: isPositive
+                                ? Colors.green.shade700
                                 : Colors.red.shade700,
                           ),
                         ),
@@ -184,7 +169,7 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
                     ],
                   ),
                   const SizedBox(height: 10),
-                  
+
                   // Quick Stats
                   Row(
                     children: [
@@ -218,11 +203,14 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildStatItem(String label, double amount, Color color, IconData icon, bool isDark) {
+  Widget _buildStatItem(
+      String label, double amount, Color color, IconData icon, bool isDark) {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: isDark ? Colors.black.withOpacity(0.2) : Colors.white.withOpacity(0.3),
+        color: isDark
+            ? Colors.black.withOpacity(0.2)
+            : Colors.white.withOpacity(0.3),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: color.withOpacity(0.3),
@@ -270,7 +258,7 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
 
   void _showBalanceDetails(BuildContext context, bool isDark) {
     final theme = Theme.of(context);
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -316,7 +304,8 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
 
   void _showEditBalanceDialog(BuildContext context, bool isDark) {
     HapticFeedback.lightImpact();
-    final controller = TextEditingController(text: widget.balance.toStringAsFixed(2));
+    final controller =
+        TextEditingController(text: widget.balance.toStringAsFixed(2));
     final theme = Theme.of(context);
 
     showDialog(
@@ -371,7 +360,7 @@ class _BalanceCardState extends State<BalanceCard> with TickerProviderStateMixin
               if (newBalance != null) {
                 widget.onBalanceUpdate(newBalance);
                 Navigator.pop(context);
-                
+
                 // Show success message
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
