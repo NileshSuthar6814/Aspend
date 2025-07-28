@@ -462,7 +462,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
       floatingActionButton: Padding(
         padding:
-            EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 16),
+            EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 21),
         child: AnimatedSlide(
         offset: _showFab ? Offset.zero : const Offset(0, 1),
         duration: const Duration(milliseconds: 300),
@@ -742,11 +742,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       "Other"
     ];
     final List<String> accounts = [
-      "Cash",
-      "Bank",
-      "Credit Card",
-      "Digital Wallet"
-    ];
+      "Cash", "Online", "Credit Card", "Bank"];
 
     showModalBottomSheet(
       context: context,

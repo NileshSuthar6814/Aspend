@@ -112,13 +112,22 @@ class _PersonDetailPageState extends State<PersonDetailPage> with TickerProvider
                       ? LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [Colors.teal.shade900.withOpacity(0.8), Colors.teal.shade700.withOpacity(0.8)],
-                        )
+                              colors: [
+                                theme.colorScheme.primary.withOpacity(0.8),
+                                theme.colorScheme.primaryContainer
+                                    .withOpacity(0.8)
+                              ],
+                            )
                       : LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
-                        ),
+                              //colors: [Colors.teal.shade100.withOpacity(0.8), Colors.teal.shade200.withOpacity(0.8)],
+                              colors: [
+                                theme.colorScheme.primary.withOpacity(0.8),
+                                theme.colorScheme.primaryContainer
+                                    .withOpacity(0.8)
+                              ],
+                            ),
                 ),
               ),
             ),

@@ -319,14 +319,14 @@ class _SettingsPageState extends State<SettingsPage> {
             return AlertDialog(
               title: const Text('Pick App Color'),
               content: SingleChildScrollView(
-                child: ColorPicker(
+                child: BlockPicker(
                   pickerColor: selectedColor,
                   onColorChanged: (color) {
                     selectedColor = color;
                   },
-                  enableAlpha: false,
-                  showLabel: false,
-                  pickerAreaHeightPercent: 0.7,
+                  //enableAlpha: false,
+                  //showLabel: false,
+                  //pickerAreaHeightPercent: 0.7,
                 ),
               ),
               actions: [
