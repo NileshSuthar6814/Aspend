@@ -12,7 +12,6 @@ import '../widgets/balance_card.dart';
 import 'package:hive/hive.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
-import 'package:liquid_pull_to_refresh/liquid_pull_to_refresh.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:intl/intl.dart';
@@ -45,30 +44,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _fabScale = Tween<double>(begin: 1.0, end: 0.9).animate(
       CurvedAnimation(parent: _fabController, curve: Curves.easeInOut),
     );
-    
+
     // New FAB visibility animation controller
     _fabVisibilityController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _scrollController = ScrollController();
-    
+
     // Optimized scroll listener with debouncing
     _scrollController.addListener(() {
       if (!_scrollController.hasClients) return;
-      
+
       final atTop = _scrollController.position.pixels <= 0;
       final txns = context.read<TransactionProvider>().transactions;
       final isEmpty = txns.isEmpty;
       final shouldShowFab = atTop || isEmpty;
-      
+
       // Only update state if there's an actual change
       if (shouldShowFab != _showFab) {
         setState(() => _showFab = shouldShowFab);
       }
     });
-    
+
     _currentBalance; // ✅ Load from Hive
   }
 
@@ -111,16 +110,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final balance = transactionProvider.totalBalance;
     final grouped = _groupTransactionsByDate(txns);
     final hasTransactions = txns.isNotEmpty;
-    
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: LiquidPullToRefresh(
-        onRefresh: _handleRefresh,
-        showChildOpacityTransition: false,
-        color: theme.colorScheme.primary,
-        backgroundColor: theme.scaffoldBackgroundColor,
-        animSpeedFactor: 2.0,
-        child: CustomScrollView(
+      body: CustomScrollView(
         controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         slivers: [
@@ -144,43 +137,41 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(
                     decoration: BoxDecoration(
-                        gradient: useAdaptive
+                      gradient: useAdaptive
                           ? LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                                colors: [
-                                  theme.colorScheme.primary,
-                                  theme.colorScheme.primaryContainer
-                                ],
-                              )
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                theme.colorScheme.primary,
+                                theme.colorScheme.primaryContainer
+                              ],
+                            )
                           : isDark
-                            ? LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                    colors: [
-                                      theme.colorScheme.primary
-                                          .withOpacity(0.8),
-                                      theme.colorScheme.primaryContainer
-                                          .withOpacity(0.8)
-                                    ],
-                                  )
-                            : LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                    colors: [
-                                      theme.colorScheme.primary
-                                          .withOpacity(0.8),
-                                      theme.colorScheme.primaryContainer
-                                          .withOpacity(0.8)
-                                    ],
-                                  ),
+                              ? LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    theme.colorScheme.primary.withOpacity(0.8),
+                                    theme.colorScheme.primaryContainer
+                                        .withOpacity(0.8)
+                                  ],
+                                )
+                              : LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    theme.colorScheme.primary.withOpacity(0.8),
+                                    theme.colorScheme.primaryContainer
+                                        .withOpacity(0.8)
+                                  ],
+                                ),
                     ),
                   ),
                 ),
               ),
             ),
-              centerTitle: true,
-              actions: [
+            centerTitle: true,
+            actions: [
               IconButton(
                 icon: Icon(
                   Icons.analytics_outlined,
@@ -188,7 +179,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 ),
                 onPressed: () {
                   HapticFeedback.lightImpact();
-                    _showAnalyticsDialog(context);
+                  _showAnalyticsDialog(context);
                 },
               ),
               IconButton(
@@ -217,9 +208,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   },
                 ),
                 Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    child: Row(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  child: Row(
                     children: [
                       Icon(
                         Icons.history,
@@ -238,25 +229,25 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       const Spacer(),
                       Builder(
                         builder: (context) {
-                            final sortByNewest = context
-                                .watch<TransactionProvider>()
-                                .sortByNewestFirst;
-                            return IconButton(
-                              tooltip: sortByNewest
-                                  ? 'Sort by Oldest'
-                                  : 'Sort by Newest',
-                              icon: Icon(
-                                sortByNewest
-                                    ? Icons.arrow_downward
-                                    : Icons.arrow_upward,
-                                color: Colors.teal.shade700,
+                          final sortByNewest = context
+                              .watch<TransactionProvider>()
+                              .sortByNewestFirst;
+                          return IconButton(
+                            tooltip: sortByNewest
+                                ? 'Sort by Oldest'
+                                : 'Sort by Newest',
+                            icon: Icon(
+                              sortByNewest
+                                  ? Icons.arrow_downward
+                                  : Icons.arrow_upward,
+                              color: Colors.teal.shade700,
                               size: 20,
                             ),
                             onPressed: () {
-                                context
-                                    .read<TransactionProvider>()
-                                    .toggleSortOrder();
-                              },
+                              context
+                                  .read<TransactionProvider>()
+                                  .toggleSortOrder();
+                            },
                           );
                         },
                       ),
@@ -274,19 +265,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   String dateKey = grouped.entries.elementAt(index).key;
                   List<Transaction> dayTxs = grouped[dateKey]!;
                   final sortByNewest = transactionProvider.sortByNewestFirst;
-                    List<Transaction> dayIncomes = dayTxs
-                        .where((t) => t.isIncome)
-                        .toList()
-                      ..sort((a, b) => sortByNewest
-                          ? b.date.compareTo(a.date)
-                          : a.date.compareTo(b.date));
-                    List<Transaction> dayExpenses = dayTxs
-                        .where((t) => !t.isIncome)
-                        .toList()
-                      ..sort((a, b) => sortByNewest
-                          ? b.date.compareTo(a.date)
-                          : a.date.compareTo(b.date));
-                    int transactionIndex = 0;
+                  List<Transaction> dayIncomes = dayTxs
+                      .where((t) => t.isIncome)
+                      .toList()
+                    ..sort((a, b) => sortByNewest
+                        ? b.date.compareTo(a.date)
+                        : a.date.compareTo(b.date));
+                  List<Transaction> dayExpenses = dayTxs
+                      .where((t) => !t.isIncome)
+                      .toList()
+                    ..sort((a, b) => sortByNewest
+                        ? b.date.compareTo(a.date)
+                        : a.date.compareTo(b.date));
+                  int transactionIndex = 0;
 
                   // Parse the dateKey to DateTime for formatting
                   DateTime? parsedDate;
@@ -297,34 +288,33 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   }
                   String formattedDate = dateKey;
                   if (parsedDate != null) {
-                      formattedDate =
-                          DateFormat('EEEE, d MMMM').format(parsedDate);
-                    }
+                    formattedDate =
+                        DateFormat('EEEE, d MMMM').format(parsedDate);
+                  }
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Combined Date and Transaction Type Header
                       Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          child: Row(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        child: Row(
                           children: [
                             // Date Badge
                             Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: useAdaptive
+                                    ? theme.colorScheme.primary.withOpacity(0.1)
+                                    : Colors.teal.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
                                   color: useAdaptive
                                       ? theme.colorScheme.primary
-                                          .withOpacity(0.1)
-                                      : Colors.teal.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                    color: useAdaptive
-                                        ? theme.colorScheme.primary
-                                            .withOpacity(0.3)
-                                        : Colors.teal.withOpacity(0.3),
-                                    width: 1,
+                                          .withOpacity(0.3)
+                                      : Colors.teal.withOpacity(0.3),
+                                  width: 1,
                                 ),
                               ),
                               child: Text(
@@ -332,19 +322,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 style: GoogleFonts.nunito(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                    color: useAdaptive
-                                        ? theme.colorScheme.primary
-                                        : Colors.teal.shade700,
-                                  ),
+                                  color: useAdaptive
+                                      ? theme.colorScheme.primary
+                                      : Colors.teal.shade700,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 8),
                             // Income Badge
                             if (dayIncomes.isNotEmpty)
                               Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
                                   color: Colors.green.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
@@ -355,9 +345,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                      Icon(Icons.trending_up,
-                                          color: Colors.green, size: 12),
-                                      const SizedBox(width: 4),
+                                    Icon(Icons.trending_up,
+                                        color: Colors.green, size: 12),
+                                    const SizedBox(width: 4),
                                     Text(
                                       "Income",
                                       style: GoogleFonts.nunito(
@@ -373,9 +363,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             // Expense Badge
                             if (dayExpenses.isNotEmpty)
                               Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
                                   color: Colors.red.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
@@ -386,9 +376,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                      Icon(Icons.trending_down,
-                                          color: Colors.red, size: 12),
-                                      const SizedBox(width: 4),
+                                    Icon(Icons.trending_down,
+                                        color: Colors.red, size: 12),
+                                    const SizedBox(width: 4),
                                     Text(
                                       "Expenses",
                                       style: GoogleFonts.nunito(
@@ -403,15 +393,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           ],
                         ),
                       ),
-                        ...dayIncomes
-                            .map((tx) => TransactionTile(
-                                transaction: tx, index: transactionIndex++))
-                            .toList(),
-                        ...dayExpenses
-                            .map((tx) => TransactionTile(
-                                transaction: tx, index: transactionIndex++))
-                            .toList(),
-                        const SizedBox(height: 12),
+                      ...dayIncomes
+                          .map((tx) => TransactionTile(
+                              transaction: tx, index: transactionIndex++))
+                          .toList(),
+                      ...dayExpenses
+                          .map((tx) => TransactionTile(
+                              transaction: tx, index: transactionIndex++))
+                          .toList(),
+                      const SizedBox(height: 12),
                     ],
                   );
                 },
@@ -454,136 +444,113 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           // Bottom padding for better readability
           SliverToBoxAdapter(
-              child:
-                  SizedBox(height: MediaQuery.of(context).padding.bottom + 70),
-            ),
-          ],
-        ),
+            child: SizedBox(height: MediaQuery.of(context).padding.bottom + 70),
+          ),
+        ],
       ),
-      floatingActionButton: Padding(
-        padding:
-            EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom + 21),
-        child: AnimatedSlide(
-        offset: _showFab ? Offset.zero : const Offset(0, 1),
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        child: AnimatedOpacity(
-          opacity: _showFab ? 1.0 : 0.0,
-          duration: const Duration(milliseconds: 300),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+      floatingActionButton: _showFab ? _buildDualFab(context) : null,
+    );
+  }
+
+  // Helper method to build the dual FAB (income and expense)
+  Widget _buildDualFab(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 60),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: theme.colorScheme.outline.withOpacity(0.2),
+                width: 1,
               ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surface.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(28),
-                            border: Border.all(
-                              color: theme.colorScheme.outline.withOpacity(0.2),
-                              width: 1,
-                            ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Income FAB
+                  ZoomTapAnimation(
+                    onTap: () {
+                      _fabController
+                          .forward()
+                          .then((_) => _fabController.reverse());
+                      _showAddTransactionDialog(context, isIncome: true);
+                      HapticFeedback.heavyImpact();
+                    },
+                    child: ScaleTransition(
+                      scale: _fabScale,
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.green, Colors.green.shade600],
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Income FAB
-                          ZoomTapAnimation(
-                                    onTap: () {
-                              _fabController
-                                  .forward()
-                                  .then((_) => _fabController.reverse());
-                              _showAddTransactionDialog(context,
-                                  isIncome: true);
-                              HapticFeedback.heavyImpact();
-                                    },
-                            child: ScaleTransition(
-                              scale: _fabScale,
-                                    child: Container(
-                                      width: 56,
-                                      height: 56,
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                    colors: [
-                                      Colors.green,
-                                      Colors.green.shade600
-                                    ],
-                                  ),
-                                        borderRadius: BorderRadius.circular(28),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.green.withOpacity(0.3),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
-                                      ),
-                                      child: const Icon(
-                                        Icons.add,
-                                        color: Colors.white,
-                                        size: 28,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                // Expense FAB
-                          ZoomTapAnimation(
-                                    onTap: () {
-                              _fabController
-                                  .forward()
-                                  .then((_) => _fabController.reverse());
-                              _showAddTransactionDialog(context,
-                                  isIncome: false);
-                              HapticFeedback.heavyImpact();
-                                    },
-                            child: ScaleTransition(
-                              scale: _fabScale,
-                                    child: Container(
-                                      width: 56,
-                                      height: 56,
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [Colors.red, Colors.red.shade600],
-                                        ),
-                                        borderRadius: BorderRadius.circular(28),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.red.withOpacity(0.3),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
-                                      ),
-                                      child: const Icon(
-                                        Icons.remove,
-                                        color: Colors.white,
-                                        size: 28,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.green.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
                             ),
-                          ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 28,
                         ),
                       ),
                     ),
                   ),
+                  const SizedBox(width: 12),
+                  // Expense FAB
+                  ZoomTapAnimation(
+                    onTap: () {
+                      _fabController
+                          .forward()
+                          .then((_) => _fabController.reverse());
+                      _showAddTransactionDialog(context, isIncome: false);
+                      HapticFeedback.heavyImpact();
+                    },
+                    child: ScaleTransition(
+                      scale: _fabScale,
+                      child: Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.red, Colors.red.shade600],
+                          ),
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.red.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.remove,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+          ),
+        ),
       ),
     );
   }
@@ -616,12 +583,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             Icon(Icons.search, color: theme.colorScheme.primary),
             const SizedBox(width: 12),
             Text(
-          "Search Transactions",
+              "Search Transactions",
               style: GoogleFonts.nunito(
                 fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : Colors.black,
+                color: isDark ? Colors.white : Colors.black,
               ),
-          ),
+            ),
           ],
         ),
         content: TextField(
@@ -671,7 +638,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               final filtered = allTxns
                   .where((tx) =>
                       tx.note.toLowerCase().contains(query) ||
-                tx.category.toLowerCase().contains(query) ||
+                      tx.category.toLowerCase().contains(query) ||
                       tx.account.toLowerCase().contains(query))
                   .toList();
               setState(() {
@@ -701,7 +668,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 Navigator.pop(context);
               },
               child: Text("Clear Search", style: TextStyle(color: Colors.grey)),
-          ),
+            ),
         ],
       ),
     );
@@ -741,8 +708,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       "Education",
       "Other"
     ];
-    final List<String> accounts = [
-      "Cash", "Online", "Credit Card", "Bank"];
+    final List<String> accounts = ["Cash", "Online", "Credit Card", "Bank"];
 
     showModalBottomSheet(
       context: context,
@@ -775,18 +741,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Row(
-                children: [
-                  Icon(
-                    isIncome ? Icons.add_circle : Icons.remove_circle,
-                    color: isIncome ? Colors.green : Colors.red,
-                    size: 28,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    isIncome ? "Add Income" : "Add Expense",
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black,
-                      fontWeight: FontWeight.bold,
+                          children: [
+                            Icon(
+                              isIncome ? Icons.add_circle : Icons.remove_circle,
+                              color: isIncome ? Colors.green : Colors.red,
+                              size: 28,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              isIncome ? "Add Income" : "Add Expense",
+                              style: TextStyle(
+                                color: isDark ? Colors.white : Colors.black,
+                                fontWeight: FontWeight.bold,
                                 fontSize: 18,
                               ),
                             ),
@@ -1096,10 +1062,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           items:
                               (isIncome ? incomeCategories : expenseCategories)
                                   .map((e) => DropdownMenuItem(
-                                    value: e,
-                                    child: Text(e),
-                                  ))
-                              .toList(),
+                                        value: e,
+                                        child: Text(e),
+                                      ))
+                                  .toList(),
                           onChanged: (val) {
                             HapticFeedback.lightImpact();
                             _category = val!;
@@ -1131,38 +1097,38 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                TextButton(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    Navigator.pop(context);
-                  },
-                  child: Text(
-                    "Cancel",
+                            TextButton(
+                              onPressed: () {
+                                HapticFeedback.lightImpact();
+                                Navigator.pop(context);
+                              },
+                              child: Text(
+                                "Cancel",
                                 style:
                                     TextStyle(color: theme.colorScheme.primary),
                               ),
-                ),
+                            ),
                             const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  icon: Icon(isIncome ? Icons.add : Icons.remove),
+                            ElevatedButton.icon(
+                              icon: Icon(isIncome ? Icons.add : Icons.remove),
                               label:
                                   Text(isIncome ? "Add Income" : "Add Expense"),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor:
                                     isIncome ? Colors.green : Colors.red,
                                 foregroundColor: Colors.white,
-                  ),
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    if (_formKey.currentState!.validate()) {
-                      final tx = Transaction(
+                              ),
+                              onPressed: () {
+                                HapticFeedback.lightImpact();
+                                if (_formKey.currentState!.validate()) {
+                                  final tx = Transaction(
                                     amount:
                                         double.parse(_amountController.text),
                                     note: _noteController.text,
-                        category: _category,
-                        account: _account,
-                        date: DateTime.now(),
-                        isIncome: _isIncome,
+                                    category: _category,
+                                    account: _account,
+                                    date: DateTime.now(),
+                                    isIncome: _isIncome,
                                     imagePaths: _imagePaths.isNotEmpty
                                         ? List<String>.from(_imagePaths)
                                         : null,
@@ -1171,10 +1137,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                           listen: false)
                                       .addTransaction(tx);
                                   _lastAddedTx = tx;
-                      _checkAndAddPersonTransactions(tx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
+                                  _checkAndAddPersonTransactions(tx);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
                                         isIncome
                                             ? "Income added successfully!"
                                             : "Expense added successfully!",
@@ -1182,29 +1148,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       backgroundColor:
                                           isIncome ? Colors.green : Colors.red,
                                       behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          duration: const Duration(seconds: 2),
-                          action: SnackBarAction(
-                            label: 'Undo',
-                            textColor: Colors.white,
-                            onPressed: () {
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      duration: const Duration(seconds: 2),
+                                      action: SnackBarAction(
+                                        label: 'Undo',
+                                        textColor: Colors.white,
+                                        onPressed: () {
                                           Provider.of<TransactionProvider>(
                                                   context,
                                                   listen: false)
                                               .deleteTransaction(_lastAddedTx!);
-                            },
-                          ),
-                        ),
-                      );
+                                        },
+                                      ),
+                                    ),
+                                  );
                                   if (Navigator.canPop(context)) {
-                      Navigator.pop(context);
+                                    Navigator.pop(context);
                                   }
-                    }
-                  },
-                ),
-              ],
+                                }
+                              },
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -1222,12 +1188,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Get all people from the person provider
     final personProvider = Provider.of<PersonProvider>(context, listen: false);
     final people = personProvider.people;
-    
+
     // Check if any person name appears in the transaction note
     for (final person in people) {
       final personName = person.name.toLowerCase();
       final note = tx.note.toLowerCase();
-      
+
       // Check if person name is mentioned in the note
       if (note.contains(personName)) {
         // Create a person transaction
@@ -1238,10 +1204,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           date: tx.date,
           isIncome: tx.isIncome,
         );
-        
+
         // Add the person transaction
         personProvider.addTransaction(personTx);
-        
+
         // Show a subtle notification that person transaction was added
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

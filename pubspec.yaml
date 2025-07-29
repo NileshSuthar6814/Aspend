@@ -38,6 +38,7 @@ dependencies:
   flutter_displaymode: ^0.6.0
   liquid_pull_to_refresh: ^3.0.1
   flutter_colorpicker: ^1.1.0
+  custom_refresh_indicator: ^4.0.1
 
 dev_dependencies:
   flutter_test:
