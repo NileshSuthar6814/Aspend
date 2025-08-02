@@ -23,6 +23,9 @@ jobs:
         with:
           flutter-version: '3.32.4'  # Set your Flutter version
 
+      - name: clean
+        run: flutter clean
+        
       - name: Install dependencies
         run: flutter pub get
 
