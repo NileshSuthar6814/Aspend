@@ -15,6 +15,8 @@ import 'package:zoom_tap_animation/zoom_tap_animation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:intl/intl.dart';
+import '../utils/responsive_utils.dart';
+import 'package:flutter/services.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({super.key});
@@ -33,6 +35,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // Add search state
   String? _searchQuery;
   List<Transaction>? _filteredTransactions;
+  static const MethodChannel _channel = MethodChannel('transaction_detection');
 
   @override
   void initState() {
@@ -69,6 +72,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
 
     _currentBalance; // ✅ Load from Hive
+
+    // Check for pending widget actions after the widget is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkPendingWidgetAction();
+    });
+
+    // Set up method channel listener for widget actions
+    _channel.setMethodCallHandler((call) async {
+      switch (call.method) {
+        case 'showAddIncomeDialog':
+          _showAddTransactionDialog(context, isIncome: true);
+          break;
+        case 'showAddExpenseDialog':
+          _showAddTransactionDialog(context, isIncome: false);
+          break;
+      }
+    });
   }
 
   @override
@@ -99,6 +119,20 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     // Optionally, you can also reload balance or other data here
   }
 
+  void _checkPendingWidgetAction() {
+    // Import the global variable from main.dart
+    // This is a simplified approach - in a real app you'd use a proper state management solution
+    try {
+      // Check if there's a pending widget action and handle it
+      // For now, we'll use a simple approach with a small delay to ensure the widget is ready
+      Future.delayed(const Duration(milliseconds: 500), () {
+        // This will be handled by the widget click listener in main.dart
+      });
+    } catch (e) {
+      print('Error checking pending widget action: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -119,7 +153,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         slivers: [
           // Enhanced App Bar with Glass Effect
           SliverAppBar(
-            expandedHeight: 100,
+            expandedHeight: ResponsiveUtils.getResponsiveAppBarHeight(context),
             floating: true,
             pinned: true,
             elevation: 1,
@@ -128,6 +162,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               title: Text(
                 "Aspends Tracker",
                 style: GoogleFonts.nunito(
+                  fontSize: ResponsiveUtils.getResponsiveFontSize(
+                    context,
+                    mobile: 20,
+                    tablet: 24,
+                    desktop: 28,
+                  ),
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.onSurface,
                 ),

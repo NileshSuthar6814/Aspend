@@ -11,6 +11,7 @@ import 'dart:ui'; // Added for BackdropFilter
 import '../models/transaction.dart';
 import '../providers/transaction_provider.dart';
 import '../providers/theme_provider.dart';
+import '../utils/responsive_utils.dart';
 
 class TransactionTile extends StatefulWidget {
   final Transaction transaction;
@@ -64,8 +65,9 @@ class _TransactionTileState extends State<TransactionTile>
     final theme = Theme.of(context);
     final isDark = context.watch<AppThemeProvider>().isDarkMode;
     final isIncome = widget.transaction.isIncome;
-    final amountText = "${isIncome ? '+' : '-'}₹${widget.transaction.amount.toStringAsFixed(2)}";
-    
+    final amountText =
+        "${isIncome ? '+' : '-'}₹${widget.transaction.amount.toStringAsFixed(2)}";
+
     // Get category icon and color - memoized
     final categoryIcon = _getCategoryIcon(widget.transaction.category);
     final categoryColor = _getCategoryColor(widget.transaction.category);
@@ -185,7 +187,8 @@ class _TransactionTileState extends State<TransactionTile>
                   ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -235,7 +238,8 @@ class _TransactionTileState extends State<TransactionTile>
                                 Icon(
                                   _getAccountIcon(widget.transaction.account),
                                   size: 12,
-                                  color: isDark ? Colors.white70 : Colors.black54,
+                                  color:
+                                      isDark ? Colors.white70 : Colors.black54,
                                 ),
                                 const SizedBox(width: 4),
                                 Expanded(
@@ -244,7 +248,9 @@ class _TransactionTileState extends State<TransactionTile>
                                     style: GoogleFonts.nunito(
                                       fontSize: 11,
                                       fontWeight: FontWeight.w500,
-                                      color: isDark ? Colors.white70 : Colors.black54,
+                                      color: isDark
+                                          ? Colors.white70
+                                          : Colors.black54,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -274,7 +280,9 @@ class _TransactionTileState extends State<TransactionTile>
                             style: GoogleFonts.nunito(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: isIncome ? Colors.green.shade600 : Colors.red.shade600,
+                              color: isIncome
+                                  ? Colors.green.shade600
+                                  : Colors.red.shade600,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -399,29 +407,24 @@ class _TransactionTileState extends State<TransactionTile>
     final sheetWidth = mq.size.height * 0.9;
 
     showModalBottomSheet(
-
       //set the buttom position
-
 
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(28),
           bottom: Radius.circular(28),
         ),
       ),
       builder: (_) => ConstrainedBox(
-
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.65,
           maxWidth: sheetWidth,
           minWidth: 500,
-
         ),
         child: DraggableScrollableSheet(
-
-
           initialChildSize: 0.55,
           minChildSize: 0.35,
           maxChildSize: 0.95,
@@ -430,14 +433,16 @@ class _TransactionTileState extends State<TransactionTile>
             return Material(
               color: theme.colorScheme.surface,
               elevation: 2,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(28),
                 bottom: Radius.circular(28),
               ),
               child: SingleChildScrollView(
                 controller: scrollController,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        child: Column(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  child: Column(
           mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -463,7 +468,8 @@ class _TransactionTileState extends State<TransactionTile>
                           // ),
                         ],
                       ),
-                      if (widget.transaction.imagePaths != null && widget.transaction.imagePaths!.isNotEmpty) ...[
+                      if (widget.transaction.imagePaths != null &&
+                          widget.transaction.imagePaths!.isNotEmpty) ...[
                         SizedBox(
                           width: double.infinity,
                           child: ClipRRect(
@@ -471,16 +477,19 @@ class _TransactionTileState extends State<TransactionTile>
                             child: AspectRatio(
                               aspectRatio: 1.7,
                               child: PageView.builder(
-                                itemCount: widget.transaction.imagePaths!.length,
+                                itemCount:
+                                    widget.transaction.imagePaths!.length,
                                 itemBuilder: (context, idx) {
-                                  final path = widget.transaction.imagePaths![idx];
+                                  final path =
+                                      widget.transaction.imagePaths![idx];
                                   return GestureDetector(
                                     onTap: () {
                                       showDialog(
                                         context: context,
                                         builder: (_) => _FullScreenImageDialog(
                                           imagePath: path,
-                                          heroTag: 'txn-img-${widget.index}-$idx',
+                                          heroTag:
+                                              'txn-img-${widget.index}-$idx',
                                           isDark: isDark,
                                         ),
                                       );
@@ -528,11 +537,28 @@ class _TransactionTileState extends State<TransactionTile>
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 18),
-                      _buildDetailRow("Amount", "₹${widget.transaction.amount.toStringAsFixed(2)}", textColor, center: true),
-                      _buildDetailRow("Note", widget.transaction.note.isNotEmpty ? widget.transaction.note : "—", textColor, center: true),
-                      _buildDetailRow("Account", widget.transaction.account, textColor, center: true),
-                      _buildDetailRow("Type", widget.transaction.isIncome ? "Income" : "Expense", textColor, center: true),
-                      const Divider(height: 32, thickness: 1, indent: 0, endIndent: 0),
+                      _buildDetailRow(
+                          "Amount",
+                          "₹${widget.transaction.amount.toStringAsFixed(2)}",
+                          textColor,
+                          center: true),
+                      _buildDetailRow(
+                          "Note",
+                          widget.transaction.note.isNotEmpty
+                              ? widget.transaction.note
+                              : "—",
+                          textColor,
+                          center: true),
+                      _buildDetailRow(
+                          "Account", widget.transaction.account, textColor,
+                          center: true),
+                      _buildDetailRow(
+                          "Type",
+                          widget.transaction.isIncome ? "Income" : "Expense",
+                          textColor,
+                          center: true),
+                      const Divider(
+                          height: 32, thickness: 1, indent: 0, endIndent: 0),
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
@@ -545,8 +571,9 @@ class _TransactionTileState extends State<TransactionTile>
                               textColor: Colors.white,
                               onTap: () {
                                 Navigator.of(context).pop();
-                      _showEditTransactionDialog(context, widget.transaction);
-                    },
+                                _showEditTransactionDialog(
+                                    context, widget.transaction);
+                              },
                   ),
                             _AnimatedPillButton(
                               icon: Icons.delete,
@@ -555,8 +582,9 @@ class _TransactionTileState extends State<TransactionTile>
                               textColor: Colors.white,
                               onTap: () {
                                 Navigator.of(context).pop();
-                      Provider.of<TransactionProvider>(context, listen: false)
-                          .deleteTransaction(widget.transaction);
+                                Provider.of<TransactionProvider>(context,
+                                        listen: false)
+                                    .deleteTransaction(widget.transaction);
                               },
                             ),
                             _AnimatedPillButton(
@@ -565,7 +593,8 @@ class _TransactionTileState extends State<TransactionTile>
                               color: Colors.blueAccent,
                               textColor: Colors.white,
                               onTap: () {
-                                Share.share('Amount: ₹${widget.transaction.amount.toStringAsFixed(2)}\nNote: ${widget.transaction.note}\nCategory: ${widget.transaction.category}\nAccount: ${widget.transaction.account}\nDate: ${DateFormat.yMMMd().format(widget.transaction.date)}');
+                                Share.share(
+                                    'Amount: ₹${widget.transaction.amount.toStringAsFixed(2)}\nNote: ${widget.transaction.note}\nCategory: ${widget.transaction.category}\nAccount: ${widget.transaction.account}\nDate: ${DateFormat.yMMMd().format(widget.transaction.date)}');
                                 Navigator.of(context).pop();
                               },
                             ),
@@ -576,10 +605,14 @@ class _TransactionTileState extends State<TransactionTile>
                               textColor: Colors.white,
                               onTap: () {
                                 Clipboard.setData(ClipboardData(
-                                  text: 'Amount: ₹${widget.transaction.amount.toStringAsFixed(2)}\nNote: ${widget.transaction.note}\nCategory: ${widget.transaction.category}\nAccount: ${widget.transaction.account}\nDate: ${DateFormat.yMMMd().format(widget.transaction.date)}',
+                                  text:
+                                      'Amount: ₹${widget.transaction.amount.toStringAsFixed(2)}\nNote: ${widget.transaction.note}\nCategory: ${widget.transaction.category}\nAccount: ${widget.transaction.account}\nDate: ${DateFormat.yMMMd().format(widget.transaction.date)}',
                                 ));
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Transaction details copied!'), duration: Duration(seconds: 2)),
+                                  SnackBar(
+                                      content:
+                                          Text('Transaction details copied!'),
+                                      duration: Duration(seconds: 2)),
                                 );
                                 Navigator.of(context).pop();
                               },
@@ -599,7 +632,8 @@ class _TransactionTileState extends State<TransactionTile>
     );
   }
 
-  Widget _buildDetailRow(String label, String value, Color textColor, {bool center = false}) {
+  Widget _buildDetailRow(String label, String value, Color textColor,
+      {bool center = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -634,28 +668,48 @@ class _TransactionTileState extends State<TransactionTile>
 
   void _showEditTransactionDialog(BuildContext context, Transaction tx) {
     final theme = Theme.of(context);
-    final isDark = Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
+    final isDark =
+        Provider.of<AppThemeProvider>(context, listen: false).isDarkMode;
     final _formKey = GlobalKey<FormState>();
-    final _amountController = TextEditingController(text: tx.amount.toStringAsFixed(2));
+    final _amountController =
+        TextEditingController(text: tx.amount.toStringAsFixed(2));
     final _noteController = TextEditingController(text: tx.note);
     String _category = tx.category;
     String _account = tx.account;
     bool _isIncome = tx.isIncome;
 
     final List<String> incomeCategories = [
-      "Salary", "Freelance", "Investment", "Gift", "Refund", "Other"
+      "Salary",
+      "Freelance",
+      "Investment",
+      "Gift",
+      "Refund",
+      "Other"
     ];
     final List<String> expenseCategories = [
-      "Food", "Transport", "Shopping", "Bills", "Entertainment", "Health", "Education", "Other"
+      "Food",
+      "Transport",
+      "Shopping",
+      "Bills",
+      "Entertainment",
+      "Health",
+      "Education",
+      "Other"
     ];
-    final List<String> accounts = ["Cash", "Bank", "Credit Card", "Digital Wallet"];
+    final List<String> accounts = [
+      "Cash",
+      "Bank",
+      "Credit Card",
+      "Digital Wallet"
+    ];
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) {
           // Ensure _category is always valid for the current type
-          final currentCategories = _isIncome ? incomeCategories : expenseCategories;
+          final currentCategories =
+              _isIncome ? incomeCategories : expenseCategories;
           if (!currentCategories.contains(_category)) {
             _category = currentCategories.first;
           }
@@ -664,11 +718,13 @@ class _TransactionTileState extends State<TransactionTile>
             _account = accounts.first;
           }
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             backgroundColor: theme.dialogBackgroundColor,
             title: Row(
               children: [
-                Icon(_isIncome ? Icons.add_circle : Icons.remove_circle, color: _isIncome ? Colors.green : Colors.red, size: 28),
+                Icon(_isIncome ? Icons.add_circle : Icons.remove_circle,
+                    color: _isIncome ? Colors.green : Colors.red, size: 28),
                 const SizedBox(width: 12),
                 Text(
                   "Edit Transaction",
@@ -699,7 +755,8 @@ class _TransactionTileState extends State<TransactionTile>
                           fillColor: theme.colorScheme.surface,
                         ),
                         keyboardType: TextInputType.number,
-                        validator: (val) => val == null || val.isEmpty ? "Enter amount" : null,
+                        validator: (val) =>
+                            val == null || val.isEmpty ? "Enter amount" : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -764,8 +821,15 @@ class _TransactionTileState extends State<TransactionTile>
                       ),
                       const SizedBox(height: 16),
                       SwitchListTile(
-                        title: Text('Is Income', style: GoogleFonts.nunito(fontSize: 16, fontWeight: FontWeight.w600)),
-                        subtitle: Text(_isIncome ? 'You received money' : 'You gave money', style: GoogleFonts.nunito(fontSize: 14, color: theme.colorScheme.onSurface.withOpacity(0.7))),
+                        title: Text('Is Income',
+                            style: GoogleFonts.nunito(
+                                fontSize: 16, fontWeight: FontWeight.w600)),
+                        subtitle: Text(
+                            _isIncome ? 'You received money' : 'You gave money',
+                            style: GoogleFonts.nunito(
+                                fontSize: 14,
+                                color: theme.colorScheme.onSurface
+                                    .withOpacity(0.7))),
                         value: _isIncome,
                         onChanged: (v) {
                           HapticFeedback.lightImpact();
@@ -786,7 +850,8 @@ class _TransactionTileState extends State<TransactionTile>
                   HapticFeedback.lightImpact();
                   Navigator.pop(context);
                 },
-                child: Text("Cancel", style: TextStyle(color: theme.colorScheme.primary)),
+                child: Text("Cancel",
+                    style: TextStyle(color: theme.colorScheme.primary)),
               ),
               ElevatedButton.icon(
                 icon: const Icon(Icons.save),
@@ -806,14 +871,17 @@ class _TransactionTileState extends State<TransactionTile>
                       date: tx.date,
                       isIncome: _isIncome,
                     );
-                    Provider.of<TransactionProvider>(context, listen: false).updateTransaction(tx, newTx);
+                    Provider.of<TransactionProvider>(context, listen: false)
+                        .updateTransaction(tx, newTx);
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: const Text("Transaction updated successfully!"),
+                        content:
+                            const Text("Transaction updated successfully!"),
                         backgroundColor: Colors.blue,
                         behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
                         duration: Duration(seconds: 2),
                       ),
                     );
@@ -832,12 +900,17 @@ class _ImagePreviewWithInteraction extends StatefulWidget {
   final String imagePath;
   final String heroTag;
   final VoidCallback onTap;
-  const _ImagePreviewWithInteraction({required this.imagePath, required this.heroTag, required this.onTap});
+
+  const _ImagePreviewWithInteraction(
+      {required this.imagePath, required this.heroTag, required this.onTap});
   @override
-  State<_ImagePreviewWithInteraction> createState() => _ImagePreviewWithInteractionState();
+  State<_ImagePreviewWithInteraction> createState() =>
+      _ImagePreviewWithInteractionState();
 }
 
-class _ImagePreviewWithInteractionState extends State<_ImagePreviewWithInteraction> with SingleTickerProviderStateMixin {
+class _ImagePreviewWithInteractionState
+    extends State<_ImagePreviewWithInteraction>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnim;
   bool _loading = true;
@@ -846,7 +919,11 @@ class _ImagePreviewWithInteractionState extends State<_ImagePreviewWithInteracti
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 100), lowerBound: 0.96, upperBound: 1.0);
+    _controller = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 100),
+        lowerBound: 0.96,
+        upperBound: 1.0);
     _scaleAnim = _controller.drive(Tween(begin: 1.0, end: 0.96));
   }
 
@@ -873,7 +950,8 @@ class _ImagePreviewWithInteractionState extends State<_ImagePreviewWithInteracti
             borderRadius: BorderRadius.circular(16),
             child: Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.withOpacity(0.18), width: 1),
+                border:
+                    Border.all(color: Colors.grey.withOpacity(0.18), width: 1),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.08),
@@ -892,7 +970,8 @@ class _ImagePreviewWithInteractionState extends State<_ImagePreviewWithInteracti
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                   if (_error)
-                    const Icon(Icons.broken_image, size: 40, color: Colors.redAccent),
+                    const Icon(Icons.broken_image,
+                        size: 40, color: Colors.redAccent),
                   Image.file(
                     File(widget.imagePath),
                     fit: BoxFit.cover,
@@ -913,7 +992,8 @@ class _ImagePreviewWithInteractionState extends State<_ImagePreviewWithInteracti
                         _loading = false;
                         _error = true;
                       });
-                      return const Icon(Icons.broken_image, size: 40, color: Colors.redAccent);
+                      return const Icon(Icons.broken_image,
+                          size: 40, color: Colors.redAccent);
                     },
                   ),
                 ],
@@ -930,7 +1010,9 @@ class _FullScreenImageDialog extends StatelessWidget {
   final String imagePath;
   final String heroTag;
   final bool isDark;
-  const _FullScreenImageDialog({required this.imagePath, required this.heroTag, required this.isDark});
+
+  const _FullScreenImageDialog(
+      {required this.imagePath, required this.heroTag, required this.isDark});
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -946,7 +1028,6 @@ class _FullScreenImageDialog extends StatelessWidget {
           child: Hero(
             tag: heroTag,
             child: InteractiveViewer(
-
               boundaryMargin: const EdgeInsets.all(40),
               minScale: 0.8,
               maxScale: 4.0,
@@ -978,7 +1059,8 @@ class _FullScreenImageDialog extends StatelessWidget {
                     Navigator.pop(context);
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: isDark ? Colors.white10 : Colors.black26,
                       borderRadius: BorderRadius.circular(24),
@@ -995,7 +1077,9 @@ class _FullScreenImageDialog extends StatelessWidget {
                       children: const [
                         Icon(Icons.close, color: Colors.white, size: 20),
                         SizedBox(width: 4),
-                        Text('Close', style: TextStyle(color: Colors.white, fontSize: 14)),
+                        Text('Close',
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 14)),
                       ],
                     ),
                   ),
@@ -1014,9 +1098,15 @@ class _FullScreenGalleryDialog extends StatefulWidget {
   final int initialIndex;
   final String heroTagPrefix;
   final bool isDark;
-  const _FullScreenGalleryDialog({required this.imagePaths, required this.initialIndex, required this.heroTagPrefix, required this.isDark});
+
+  const _FullScreenGalleryDialog(
+      {required this.imagePaths,
+      required this.initialIndex,
+      required this.heroTagPrefix,
+      required this.isDark});
   @override
-  State<_FullScreenGalleryDialog> createState() => _FullScreenGalleryDialogState();
+  State<_FullScreenGalleryDialog> createState() =>
+      _FullScreenGalleryDialogState();
 }
 
 class _FullScreenGalleryDialogState extends State<_FullScreenGalleryDialog> {
@@ -1118,7 +1208,8 @@ class _FullScreenGalleryDialogState extends State<_FullScreenGalleryDialog> {
                     Navigator.pop(context);
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: widget.isDark ? Colors.white10 : Colors.black26,
                       borderRadius: BorderRadius.circular(24),
@@ -1135,7 +1226,9 @@ class _FullScreenGalleryDialogState extends State<_FullScreenGalleryDialog> {
                       children: const [
                         Icon(Icons.close, color: Colors.white, size: 20),
                         SizedBox(width: 4),
-                        Text('Close', style: TextStyle(color: Colors.white, fontSize: 14)),
+                        Text('Close',
+                            style:
+                                TextStyle(color: Colors.white, fontSize: 14)),
                       ],
                     ),
                   ),
@@ -1201,12 +1294,19 @@ class _AnimatedPillButton extends StatefulWidget {
   final Color color;
   final Color textColor;
   final VoidCallback onTap;
-  const _AnimatedPillButton({required this.icon, required this.label, required this.color, required this.textColor, required this.onTap});
+
+  const _AnimatedPillButton(
+      {required this.icon,
+      required this.label,
+      required this.color,
+      required this.textColor,
+      required this.onTap});
   @override
   State<_AnimatedPillButton> createState() => _AnimatedPillButtonState();
 }
 
-class _AnimatedPillButtonState extends State<_AnimatedPillButton> with SingleTickerProviderStateMixin {
+class _AnimatedPillButtonState extends State<_AnimatedPillButton>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnim;
   bool _pressed = false;
@@ -1214,7 +1314,11 @@ class _AnimatedPillButtonState extends State<_AnimatedPillButton> with SingleTic
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 80), lowerBound: 0.96, upperBound: 1.0);
+    _controller = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 80),
+        lowerBound: 0.96,
+        upperBound: 1.0);
     _scaleAnim = _controller.drive(Tween(begin: 1.0, end: 0.96));
   }
 
@@ -1262,7 +1366,11 @@ class _AnimatedPillButtonState extends State<_AnimatedPillButton> with SingleTic
             children: [
               Icon(widget.icon, color: widget.textColor, size: 18),
               const SizedBox(width: 8),
-              Text(widget.label, style: TextStyle(color: widget.textColor, fontWeight: FontWeight.w600, fontSize: 14)),
+              Text(widget.label,
+                  style: TextStyle(
+                      color: widget.textColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14)),
             ],
           ),
         ),
@@ -1275,25 +1383,34 @@ class _AnimatedImagePreview extends StatefulWidget {
   final String imagePath;
   final String heroTag;
   final VoidCallback onTap;
-  const _AnimatedImagePreview({required this.imagePath, required this.heroTag, required this.onTap});
+
+  const _AnimatedImagePreview(
+      {required this.imagePath, required this.heroTag, required this.onTap});
   @override
   State<_AnimatedImagePreview> createState() => _AnimatedImagePreviewState();
 }
 
-class _AnimatedImagePreviewState extends State<_AnimatedImagePreview> with SingleTickerProviderStateMixin {
+class _AnimatedImagePreviewState extends State<_AnimatedImagePreview>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnim;
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 80), lowerBound: 0.96, upperBound: 1.0);
+    _controller = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 80),
+        lowerBound: 0.96,
+        upperBound: 1.0);
     _scaleAnim = _controller.drive(Tween(begin: 1.0, end: 0.96));
   }
+
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(

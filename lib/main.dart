@@ -27,6 +27,10 @@ import 'providers/theme_provider.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
 //import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 import 'package:local_auth/local_auth.dart';
+import 'services/transaction_detection_service.dart';
+import 'services/native_bridge.dart';
+import 'utils/error_handler.dart';
+import 'utils/responsive_utils.dart';
 
 //
 void main() async {
@@ -69,6 +73,15 @@ void main() async {
 
   await FlutterDisplayMode.setHighRefreshRate();
 
+  // Initialize transaction detection services
+  try {
+    await NativeBridge.initialize();
+    await TransactionDetectionService.initialize();
+    print('Transaction detection services initialized successfully');
+  } catch (e) {
+    print('Error initializing transaction detection services: $e');
+  }
+
   // Register background callback for widget events
   HomeWidget.registerBackgroundCallback(backgroundCallback);
 
@@ -93,6 +106,9 @@ void backgroundCallback(Uri? uri) async {
   }
 }
 
+// Global variable to store pending widget action
+String? _pendingWidgetAction;
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -100,10 +116,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // Listen for widget click actions while app is running
     HomeWidget.widgetClicked.listen((Uri? uri) {
-      if (uri != null && uri.host == 'addTransaction') {
-        // You can use a navigator key or other logic to open the add transaction screen
-        // For now, just print for debug
-        print('Widget action: addTransaction');
+      if (uri != null) {
+        print('Widget action: ${uri.host}');
+        // Store the widget action to be handled by the home page
+        _pendingWidgetAction = uri.host;
       }
     });
     return DynamicColorBuilder(
@@ -271,13 +287,30 @@ class _SplashScreenState extends State<SplashScreen>
         print('SplashScreen: introCompleted = ' + introCompleted.toString());
         Future.delayed(const Duration(seconds: 2), () async {
           if (appLockEnabled) {
-            final localAuth = LocalAuthentication();
-            final didAuthenticate = await localAuth.authenticate(
-              localizedReason: 'Authenticate to access Aspends Tracker',
-              options: const AuthenticationOptions(
-                  biometricOnly: false, stickyAuth: true),
-            );
-            if (!didAuthenticate) return;
+            try {
+              final localAuth = LocalAuthentication();
+              final canCheckDeviceSupport = await localAuth.isDeviceSupported();
+
+              if (!canCheckDeviceSupport) {
+                // If device doesn't support biometrics, skip authentication
+                print(
+                    'SplashScreen: Device does not support biometrics, skipping authentication');
+              } else {
+                final didAuthenticate = await localAuth.authenticate(
+                  localizedReason: 'Authenticate to access Aspends Tracker',
+                  options: const AuthenticationOptions(
+                      biometricOnly: false, stickyAuth: true),
+                );
+                if (!didAuthenticate) {
+                  print(
+                      'SplashScreen: Authentication failed, staying on splash');
+                  return;
+                }
+              }
+            } catch (e) {
+              print('SplashScreen: Authentication error: $e');
+              // Continue without authentication if there's an error
+            }
           }
           print('SplashScreen: Navigating to next screen');
           Navigator.pushReplacement(
@@ -332,8 +365,10 @@ class _SplashScreenState extends State<SplashScreen>
                   children: [
                     // App Icon/Logo
                     Container(
-                      width: 120,
-                      height: 120,
+                      width: ResponsiveUtils.getResponsiveIconSize(context,
+                          mobile: 120, tablet: 140, desktop: 160),
+                      height: ResponsiveUtils.getResponsiveIconSize(context,
+                          mobile: 120, tablet: 140, desktop: 160),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(30),
@@ -344,7 +379,8 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                       child: Icon(
                         Icons.account_balance_wallet,
-                        size: 60,
+                        size: ResponsiveUtils.getResponsiveIconSize(context,
+                            mobile: 60, tablet: 70, desktop: 80),
                         color: Colors.white,
                       ),
                     ),
@@ -353,18 +389,22 @@ class _SplashScreenState extends State<SplashScreen>
                     Text(
                       'Aspends Tracker',
                       style: GoogleFonts.nunito(
-                        fontSize: 32,
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(context,
+                            mobile: 32, tablet: 36, desktop: 40),
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(
+                        height: ResponsiveUtils.getResponsiveSpacing(context,
+                            mobile: 8, tablet: 12, desktop: 16)),
                     // Tagline
                     Text(
                       'Smart Money Management',
                       style: GoogleFonts.nunito(
-                        fontSize: 16,
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(context,
+                            mobile: 16, tablet: 18, desktop: 20),
                         color: Colors.white.withOpacity(0.9),
                         fontWeight: FontWeight.w500,
                       ),
@@ -507,26 +547,26 @@ class _RootNavigationState extends State<RootNavigation>
           ),
 
           /// Bottom Navigation bar items
-              Positioned(
-                bottom: 18,
-                left: 22,
-                right: 22,
-                height: 60,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    _buildBNBItem(Icons.home_outlined, 0, "Home"),
-                    _buildBNBItem(Icons.person, 1, "Person"),
-                    _buildBNBItem(Icons.auto_graph, 2, "Chart"),
-                    _buildBNBItem(Icons.settings_outlined, 3, "Setting"),
-                  ],
-                ),
-              ),
-            ],
+          Positioned(
+            bottom: 18,
+            left: 22,
+            right: 22,
+            height: 60,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                _buildBNBItem(Icons.home_outlined, 0, "Home"),
+                _buildBNBItem(Icons.person, 1, "Person"),
+                _buildBNBItem(Icons.auto_graph, 2, "Chart"),
+                _buildBNBItem(Icons.settings_outlined, 3, "Setting"),
+              ],
+            ),
           ),
-        ));
+        ],
+      ),
+    ));
   }
 
   Widget _buildBNBItem(IconData icon, index, label) {

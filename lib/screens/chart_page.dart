@@ -10,6 +10,7 @@ import '../models/transaction.dart';
 import '../providers/theme_provider.dart';
 import '../providers/transaction_provider.dart';
 import '../widgets/transaction_tile.dart';
+import '../utils/responsive_utils.dart';
 
 class ChartPage extends StatefulWidget {
   ChartPage({super.key});
@@ -59,7 +60,7 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
         slivers: [
           // Enhanced App Bar
           SliverAppBar(
-            expandedHeight: 100,
+            expandedHeight: ResponsiveUtils.getResponsiveAppBarHeight(context),
             floating: true,
             pinned: true,
             elevation: 1,
@@ -69,7 +70,12 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                 'Analytics',
                 style: GoogleFonts.nunito(
                   fontWeight: FontWeight.bold,
-                  fontSize: 24,
+                  fontSize: ResponsiveUtils.getResponsiveFontSize(
+                    context,
+                    mobile: 24,
+                    tablet: 28,
+                    desktop: 32,
+                  ),
                   color: theme.colorScheme.onSurface,
                 ),
               ),
@@ -118,20 +124,34 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
           SliverToBoxAdapter(
             child: hasData
                 ? Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
+                    padding: ResponsiveUtils.getResponsiveEdgeInsets(
+                      context,
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         // Summary Cards
                         _buildSummaryCards(totalIncome, totalSpend, isDark),
-                        const SizedBox(height: 18),
+                        SizedBox(
+                            height: ResponsiveUtils.getResponsiveSpacing(
+                                context,
+                                mobile: 18,
+                                tablet: 24,
+                                desktop: 32)),
                         // Chart Tabs
                         _buildChartTabs(isDark),
-                        const SizedBox(height: 10),
+                        SizedBox(
+                            height: ResponsiveUtils.getResponsiveSpacing(
+                                context,
+                                mobile: 10,
+                                tablet: 16,
+                                desktop: 20)),
                         // Chart Content
                         SizedBox(
-                          height: 300,
+                          height:
+                              ResponsiveUtils.getResponsiveChartHeight(context),
                           child: TabBarView(
                             controller: _tabController,
                             children: [
@@ -141,7 +161,12 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(
+                            height: ResponsiveUtils.getResponsiveSpacing(
+                                context,
+                                mobile: 16,
+                                tablet: 24,
+                                desktop: 32)),
                       ],
                     ),
                   )
@@ -160,44 +185,142 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
       double totalIncome, double totalSpend, bool isDark) {
     final netBalance = totalIncome - totalSpend;
 
-    return Row(
-      children: [
-        Expanded(
-          child: ZoomTapAnimation(
-            child: _buildSummaryCard(
-              "Income",
-              totalIncome,
-              Colors.green,
-              Icons.trending_up,
-              isDark,
+    return ResponsiveUtils.responsiveBuilder(
+      context: context,
+      mobile: Row(
+        children: [
+          Expanded(
+            child: ZoomTapAnimation(
+              child: _buildSummaryCard(
+                "Income",
+                totalIncome,
+                Colors.green,
+                Icons.trending_up,
+                isDark,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: ZoomTapAnimation(
-            child: _buildSummaryCard(
-              "Expenses",
-              totalSpend,
-              Colors.red,
-              Icons.trending_down,
-              isDark,
+          SizedBox(
+              width: ResponsiveUtils.getResponsiveSpacing(context,
+                  mobile: 12, tablet: 16, desktop: 20)),
+          Expanded(
+            child: ZoomTapAnimation(
+              child: _buildSummaryCard(
+                "Expenses",
+                totalSpend,
+                Colors.red,
+                Icons.trending_down,
+                isDark,
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: ZoomTapAnimation(
-            child: _buildSummaryCard(
-              "Balance",
-              netBalance,
-              netBalance >= 0 ? Colors.blue : Colors.orange,
-              Icons.account_balance_wallet,
-              isDark,
+          SizedBox(
+              width: ResponsiveUtils.getResponsiveSpacing(context,
+                  mobile: 12, tablet: 16, desktop: 20)),
+          Expanded(
+            child: ZoomTapAnimation(
+              child: _buildSummaryCard(
+                "Balance",
+                netBalance,
+                netBalance >= 0 ? Colors.blue : Colors.orange,
+                Icons.account_balance_wallet,
+                isDark,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
+      tablet: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: ZoomTapAnimation(
+                  child: _buildSummaryCard(
+                    "Income",
+                    totalIncome,
+                    Colors.green,
+                    Icons.trending_up,
+                    isDark,
+                  ),
+                ),
+              ),
+              SizedBox(
+                  width: ResponsiveUtils.getResponsiveSpacing(context,
+                      mobile: 12, tablet: 16, desktop: 20)),
+              Expanded(
+                child: ZoomTapAnimation(
+                  child: _buildSummaryCard(
+                    "Expenses",
+                    totalSpend,
+                    Colors.red,
+                    Icons.trending_down,
+                    isDark,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(
+              height: ResponsiveUtils.getResponsiveSpacing(context,
+                  mobile: 12, tablet: 16, desktop: 20)),
+          SizedBox(
+            width: MediaQuery.of(context).size.width * 0.5,
+            child: ZoomTapAnimation(
+              child: _buildSummaryCard(
+                "Balance",
+                netBalance,
+                netBalance >= 0 ? Colors.blue : Colors.orange,
+                Icons.account_balance_wallet,
+                isDark,
+              ),
+            ),
+          ),
+        ],
+      ),
+      desktop: Row(
+        children: [
+          Expanded(
+            child: ZoomTapAnimation(
+              child: _buildSummaryCard(
+                "Income",
+                totalIncome,
+                Colors.green,
+                Icons.trending_up,
+                isDark,
+              ),
+            ),
+          ),
+          SizedBox(
+              width: ResponsiveUtils.getResponsiveSpacing(context,
+                  mobile: 12, tablet: 16, desktop: 20)),
+          Expanded(
+            child: ZoomTapAnimation(
+              child: _buildSummaryCard(
+                "Expenses",
+                totalSpend,
+                Colors.red,
+                Icons.trending_down,
+                isDark,
+              ),
+            ),
+          ),
+          SizedBox(
+              width: ResponsiveUtils.getResponsiveSpacing(context,
+                  mobile: 12, tablet: 16, desktop: 20)),
+          Expanded(
+            child: ZoomTapAnimation(
+              child: _buildSummaryCard(
+                "Balance",
+                netBalance,
+                netBalance >= 0 ? Colors.blue : Colors.orange,
+                Icons.account_balance_wallet,
+                isDark,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -209,12 +332,15 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context,
+            mobile: 12, tablet: 16, desktop: 20)),
         child: Column(
           children: [
             Container(
-              width: 32,
-              height: 32,
+              width: ResponsiveUtils.getResponsiveIconSize(context,
+                  mobile: 32, tablet: 40, desktop: 48),
+              height: ResponsiveUtils.getResponsiveIconSize(context,
+                  mobile: 32, tablet: 40, desktop: 48),
               decoration: BoxDecoration(
                 color: c.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
@@ -223,22 +349,33 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                   width: 1,
                 ),
               ),
-              child: Icon(icon, color: c, size: 16),
+              child: Icon(
+                icon,
+                color: c,
+                size: ResponsiveUtils.getResponsiveIconSize(context,
+                    mobile: 16, tablet: 20, desktop: 24),
+              ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(
+                height: ResponsiveUtils.getResponsiveSpacing(context,
+                    mobile: 6, tablet: 8, desktop: 10)),
             Text(
               title,
               style: GoogleFonts.nunito(
-                fontSize: 10,
+                fontSize: ResponsiveUtils.getResponsiveFontSize(context,
+                    mobile: 10, tablet: 12, desktop: 14),
                 fontWeight: FontWeight.w600,
                 color: isDark ? Colors.white70 : Colors.black87,
               ),
             ),
-            const SizedBox(height: 2),
+            SizedBox(
+                height: ResponsiveUtils.getResponsiveSpacing(context,
+                    mobile: 2, tablet: 4, desktop: 6)),
             Text(
               '₹${amount.toStringAsFixed(2)}',
               style: GoogleFonts.nunito(
-                fontSize: 14,
+                fontSize: ResponsiveUtils.getResponsiveFontSize(context,
+                    mobile: 14, tablet: 16, desktop: 18),
                 fontWeight: FontWeight.bold,
                 color: c,
               ),
@@ -253,8 +390,14 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
     final theme = Theme.of(context);
     final useAdaptive = context.watch<AppThemeProvider>().useAdaptiveColor;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      height: 38,
+      margin: EdgeInsets.symmetric(
+        horizontal: ResponsiveUtils.getResponsiveSpacing(context,
+            mobile: 8, tablet: 12, desktop: 16),
+        vertical: ResponsiveUtils.getResponsiveSpacing(context,
+            mobile: 4, tablet: 6, desktop: 8),
+      ),
+      height: ResponsiveUtils.getResponsiveIconSize(context,
+          mobile: 38, tablet: 44, desktop: 50),
       decoration: BoxDecoration(
         color: useAdaptive
             ? theme.colorScheme.surface
@@ -286,8 +429,12 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
           color: useAdaptive ? theme.colorScheme.primary : Colors.teal.shade400,
           borderRadius: BorderRadius.circular(18),
         ),
-        indicatorPadding:
-            const EdgeInsets.symmetric(vertical: 3, horizontal: -6),
+        indicatorPadding: EdgeInsets.symmetric(
+          vertical: ResponsiveUtils.getResponsiveSpacing(context,
+              mobile: 3, tablet: 4, desktop: 5),
+          horizontal: ResponsiveUtils.getResponsiveSpacing(context,
+              mobile: -6, tablet: -8, desktop: -10),
+        ),
         labelColor: useAdaptive
             ? theme.colorScheme.onPrimary
             : isDark
@@ -297,12 +444,14 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
             ? theme.colorScheme.primary.withOpacity(0.7)
             : (isDark ? Colors.white70 : Colors.black87),
         labelStyle: GoogleFonts.nunito(
-          fontSize: 13,
+          fontSize: ResponsiveUtils.getResponsiveFontSize(context,
+              mobile: 13, tablet: 14, desktop: 16),
           fontWeight: FontWeight.w700,
           letterSpacing: 0.2,
         ),
         unselectedLabelStyle: GoogleFonts.nunito(
-          fontSize: 13,
+          fontSize: ResponsiveUtils.getResponsiveFontSize(context,
+              mobile: 13, tablet: 14, desktop: 16),
           fontWeight: FontWeight.w500,
           letterSpacing: 0.1,
         ),
@@ -320,18 +469,22 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context,
+            mobile: 16, tablet: 20, desktop: 24)),
         child: Column(
           children: [
             Text(
               "Income vs Expenses",
               style: GoogleFonts.nunito(
-                fontSize: 16,
+                fontSize: ResponsiveUtils.getResponsiveFontSize(context,
+                    mobile: 16, tablet: 18, desktop: 20),
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : Colors.black,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(
+                height: ResponsiveUtils.getResponsiveSpacing(context,
+                    mobile: 12, tablet: 16, desktop: 20)),
             Expanded(
               child: PieChart(
                 PieChartData(
@@ -340,27 +493,35 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                       value: totalSpend,
                       title: 'Expenses\n₹${totalSpend.toStringAsFixed(2)}',
                       color: Colors.red.shade400,
-                      radius: 70,
-                      titleStyle: const TextStyle(
+                      radius: ResponsiveUtils.getResponsiveIconSize(context,
+                          mobile: 70, tablet: 80, desktop: 90),
+                      titleStyle: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 10,
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(context,
+                            mobile: 10, tablet: 12, desktop: 14),
                       ),
                     ),
                     PieChartSectionData(
                       value: totalIncome,
                       title: 'Income\n₹${totalIncome.toStringAsFixed(2)}',
                       color: Colors.green.shade400,
-                      radius: 70,
-                      titleStyle: const TextStyle(
+                      radius: ResponsiveUtils.getResponsiveIconSize(context,
+                          mobile: 70, tablet: 80, desktop: 90),
+                      titleStyle: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 10,
+                        fontSize: ResponsiveUtils.getResponsiveFontSize(context,
+                            mobile: 10, tablet: 12, desktop: 14),
                       ),
                     ),
                   ],
                   sectionsSpace: 5,
-                  centerSpaceRadius: 25,
+                  centerSpaceRadius: ResponsiveUtils.getResponsiveIconSize(
+                      context,
+                      mobile: 25,
+                      tablet: 30,
+                      desktop: 35),
                 ),
               ),
             ),
@@ -385,18 +546,22 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context,
+            mobile: 16, tablet: 20, desktop: 24)),
         child: Column(
           children: [
             Text(
               "Monthly Trends",
               style: GoogleFonts.nunito(
-                fontSize: 16,
+                fontSize: ResponsiveUtils.getResponsiveFontSize(context,
+                    mobile: 16, tablet: 18, desktop: 20),
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : Colors.black,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(
+                height: ResponsiveUtils.getResponsiveSpacing(context,
+                    mobile: 12, tablet: 16, desktop: 20)),
             Expanded(
               child: BarChart(
                 BarChartData(
@@ -424,7 +589,11 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                               month,
                               style: TextStyle(
                                 color: isDark ? Colors.white70 : Colors.black87,
-                                fontSize: 8,
+                                fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                    context,
+                                    mobile: 8,
+                                    tablet: 10,
+                                    desktop: 12),
                               ),
                             );
                           }
@@ -441,7 +610,11 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                             '₹${value.toInt()}',
                             style: TextStyle(
                               color: isDark ? Colors.white70 : Colors.black87,
-                              fontSize: 8,
+                              fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                  context,
+                                  mobile: 8,
+                                  tablet: 10,
+                                  desktop: 12),
                             ),
                           );
                         },
@@ -457,9 +630,12 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                         BarChartRodData(
                           toY: entry.value,
                           color: Colors.teal,
-                          width: 16,
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(6)),
+                          width: ResponsiveUtils.getResponsiveIconSize(context,
+                              mobile: 16, tablet: 20, desktop: 24),
+                          borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(
+                                  ResponsiveUtils.getResponsiveSpacing(context,
+                                      mobile: 6, tablet: 8, desktop: 10))),
                         ),
                       ],
                     );
@@ -489,18 +665,22 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context,
+            mobile: 16, tablet: 20, desktop: 24)),
         child: Column(
           children: [
             Text(
               "Spending by Category",
               style: GoogleFonts.nunito(
-                fontSize: 16,
+                fontSize: ResponsiveUtils.getResponsiveFontSize(context,
+                    mobile: 16, tablet: 18, desktop: 20),
                 fontWeight: FontWeight.bold,
                 color: isDark ? Colors.white : Colors.black,
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(
+                height: ResponsiveUtils.getResponsiveSpacing(context,
+                    mobile: 12, tablet: 16, desktop: 20)),
             Expanded(
               child: ListView.builder(
                 physics: const NeverScrollableScrollPhysics(),
@@ -512,7 +692,9 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                       (amount / categoryData.values.reduce((a, b) => a + b)) *
                           100;
                   return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    padding: EdgeInsets.symmetric(
+                        vertical: ResponsiveUtils.getResponsiveSpacing(context,
+                            mobile: 4, tablet: 6, desktop: 8)),
                     child: Row(
                       children: [
                         Expanded(
@@ -521,7 +703,11 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                             category,
                             style: GoogleFonts.nunito(
                               fontWeight: FontWeight.w600,
-                              fontSize: 12,
+                              fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                  context,
+                                  mobile: 12,
+                                  tablet: 14,
+                                  desktop: 16),
                               color: isDark ? Colors.white : Colors.black,
                             ),
                           ),
@@ -540,12 +726,18 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        SizedBox(
+                            width: ResponsiveUtils.getResponsiveSpacing(context,
+                                mobile: 6, tablet: 8, desktop: 10)),
                         Text(
                           '₹${amount.toStringAsFixed(2)}',
                           style: GoogleFonts.nunito(
                             fontWeight: FontWeight.w600,
-                            fontSize: 12,
+                            fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                context,
+                                mobile: 12,
+                                tablet: 14,
+                                desktop: 16),
                             color: useAdaptive
                                 ? theme.colorScheme.primary
                                 : Colors.teal,
@@ -580,11 +772,13 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: ResponsiveUtils.getResponsiveEdgeInsets(context,
+                  horizontal: 16, vertical: 8),
               child: Text(
                 dateKey,
                 style: GoogleFonts.nunito(
-                  fontSize: 16,
+                  fontSize: ResponsiveUtils.getResponsiveFontSize(context,
+                      mobile: 16, tablet: 18, desktop: 20),
                   fontWeight: FontWeight.bold,
                   color: isDark ? Colors.white70 : Colors.black87,
                 ),
@@ -596,7 +790,9 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
             ...dayExpenses
                 .map((tx) => TransactionTile(transaction: tx, index: 0))
                 .toList(),
-            const SizedBox(height: 12),
+            SizedBox(
+                height: ResponsiveUtils.getResponsiveSpacing(context,
+                    mobile: 12, tablet: 16, desktop: 20)),
           ],
         ),
       );
@@ -604,42 +800,61 @@ class _ChartPageState extends State<ChartPage> with TickerProviderStateMixin {
   }
 
   Widget _buildEmptyState(bool isDark) {
-    return Center(
-      child: Column(
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.6,
+      width: double.infinity,
+      child: Center(
+        child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
+              width: ResponsiveUtils.getResponsiveIconSize(context,
+                  mobile: 120, tablet: 140, desktop: 160),
+              height: ResponsiveUtils.getResponsiveIconSize(context,
+                  mobile: 120, tablet: 140, desktop: 160),
+              decoration: BoxDecoration(
               color: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(60),
-            ),
+                borderRadius: BorderRadius.circular(
+                    ResponsiveUtils.getResponsiveIconSize(context,
+                        mobile: 60, tablet: 70, desktop: 80)),
+              ),
             child: Icon(
               Icons.bar_chart,
-              size: 60,
-              color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+                size: ResponsiveUtils.getResponsiveIconSize(context,
+                    mobile: 60, tablet: 70, desktop: 80),
+                color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
             ),
           ),
-          const SizedBox(height: 24),
-          Text(
+            SizedBox(
+                height: ResponsiveUtils.getResponsiveSpacing(context,
+                    mobile: 24, tablet: 32, desktop: 40)),
+            Text(
             'No Data Available',
             style: GoogleFonts.nunito(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+                fontSize: ResponsiveUtils.getResponsiveFontSize(context,
+                    mobile: 24, tablet: 28, desktop: 32),
+                fontWeight: FontWeight.bold,
               color: isDark ? Colors.white : Colors.black87,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Add some transactions to see analytics',
+            SizedBox(
+                height: ResponsiveUtils.getResponsiveSpacing(context,
+                    mobile: 8, tablet: 12, desktop: 16)),
+            Padding(
+              padding: ResponsiveUtils.getResponsiveEdgeInsets(context,
+                  horizontal: 32, vertical: 0),
+              child: Text(
+                'Add some transactions to see analytics',
             style: GoogleFonts.nunito(
-              fontSize: 16,
-              color: isDark ? Colors.white70 : Colors.black54,
+                  fontSize: ResponsiveUtils.getResponsiveFontSize(context,
+                      mobile: 16, tablet: 18, desktop: 20),
+                  color: isDark ? Colors.white70 : Colors.black54,
             ),
             textAlign: TextAlign.center,
-          ),
+              ),
+            ),
         ],
+        ),
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/theme_provider.dart';
 import '../providers/transaction_provider.dart';
+import '../utils/responsive_utils.dart';
 
 class BalanceCard extends StatefulWidget {
   final double balance;
@@ -81,7 +82,8 @@ class _BalanceCardState extends State<BalanceCard>
         child: FadeTransition(
           opacity: _fadeAnimation,
           child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            margin: ResponsiveUtils.getResponsiveEdgeInsets(context,
+                horizontal: 8, vertical: 8),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -101,7 +103,8 @@ class _BalanceCardState extends State<BalanceCard>
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: ResponsiveUtils.getResponsiveEdgeInsets(context,
+                  horizontal: 16, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -113,7 +116,11 @@ class _BalanceCardState extends State<BalanceCard>
                       Text(
                         'Current Balance',
                         style: GoogleFonts.nunito(
-                          fontSize: 16,
+                          fontSize: ResponsiveUtils.getResponsiveFontSize(
+                              context,
+                              mobile: 16,
+                              tablet: 18,
+                              desktop: 20),
                           fontWeight: FontWeight.w600,
                           color: isDark ? Colors.white : Colors.black87,
                         ),
@@ -121,11 +128,14 @@ class _BalanceCardState extends State<BalanceCard>
                       Icon(
                         Icons.account_balance_wallet,
                         color: isDark ? Colors.white70 : Colors.black54,
-                        size: 20,
+                        size: ResponsiveUtils.getResponsiveIconSize(context,
+                            mobile: 20, tablet: 24, desktop: 28),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  SizedBox(
+                      height: ResponsiveUtils.getResponsiveSpacing(context,
+                          mobile: 10, tablet: 12, desktop: 16)),
 
                   // Balance Amount
                   Row(
@@ -136,7 +146,11 @@ class _BalanceCardState extends State<BalanceCard>
                         child: Text(
                           '₹${widget.balance.toStringAsFixed(2)}',
                           style: GoogleFonts.nunito(
-                            fontSize: 28,
+                            fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                context,
+                                mobile: 28,
+                                tablet: 32,
+                                desktop: 36),
                             fontWeight: FontWeight.bold,
                             color: isPositive
                                 ? Colors.green.shade700
@@ -145,9 +159,17 @@ class _BalanceCardState extends State<BalanceCard>
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: ResponsiveUtils.getResponsiveSpacing(
+                              context,
+                              mobile: 10,
+                              tablet: 12,
+                              desktop: 14),
+                          vertical: ResponsiveUtils.getResponsiveSpacing(
+                              context,
+                              mobile: 4,
+                              tablet: 6,
+                              desktop: 8),
                         ),
                         decoration: BoxDecoration(
                           color: isPositive
@@ -158,7 +180,11 @@ class _BalanceCardState extends State<BalanceCard>
                         child: Text(
                           isPositive ? 'Positive' : 'Negative',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: ResponsiveUtils.getResponsiveFontSize(
+                                context,
+                                mobile: 10,
+                                tablet: 12,
+                                desktop: 14),
                             fontWeight: FontWeight.w600,
                             color: isPositive
                                 ? Colors.green.shade700
@@ -182,7 +208,9 @@ class _BalanceCardState extends State<BalanceCard>
                           isDark,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(
+                          width: ResponsiveUtils.getResponsiveSpacing(context,
+                              mobile: 8, tablet: 12, desktop: 16)),
                       Expanded(
                         child: _buildStatItem(
                           'Expenses',
@@ -206,7 +234,8 @@ class _BalanceCardState extends State<BalanceCard>
   Widget _buildStatItem(
       String label, double amount, Color color, IconData icon, bool isDark) {
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context,
+          mobile: 8, tablet: 10, desktop: 12)),
       decoration: BoxDecoration(
         color: isDark
             ? Colors.black.withOpacity(0.2)
@@ -223,30 +252,43 @@ class _BalanceCardState extends State<BalanceCard>
           Row(
             children: [
               Container(
-                width: 20,
-                height: 20,
+                width: ResponsiveUtils.getResponsiveIconSize(context,
+                    mobile: 20, tablet: 24, desktop: 28),
+                height: ResponsiveUtils.getResponsiveIconSize(context,
+                    mobile: 20, tablet: 24, desktop: 28),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Icon(icon, size: 12, color: color),
+                child: Icon(
+                  icon,
+                  size: ResponsiveUtils.getResponsiveIconSize(context,
+                      mobile: 12, tablet: 14, desktop: 16),
+                  color: color,
+                ),
               ),
-              const SizedBox(width: 6),
+              SizedBox(
+                  width: ResponsiveUtils.getResponsiveSpacing(context,
+                      mobile: 6, tablet: 8, desktop: 10)),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: ResponsiveUtils.getResponsiveFontSize(context,
+                      mobile: 10, tablet: 12, desktop: 14),
                   fontWeight: FontWeight.w600,
                   color: isDark ? Colors.white70 : Colors.black87,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          SizedBox(
+              height: ResponsiveUtils.getResponsiveSpacing(context,
+                  mobile: 4, tablet: 6, desktop: 8)),
           Text(
             '₹${amount.toStringAsFixed(2)}',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: ResponsiveUtils.getResponsiveFontSize(context,
+                  mobile: 12, tablet: 14, desktop: 16),
               fontWeight: FontWeight.bold,
               color: color,
             ),

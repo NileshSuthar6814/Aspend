@@ -6,6 +6,9 @@ import '../main.dart';
 import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
+import '../services/transaction_detection_service.dart';
+import '../services/native_bridge.dart';
+import '../utils/responsive_utils.dart';
 
 class IntroPage extends StatefulWidget {
   const IntroPage({super.key});
@@ -25,42 +28,56 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
     IntroSlide(
       title: "Welcome to Aspends Tracker",
       subtitle: "Your personal finance companion",
-      description: "Track your income, expenses, and manage your money with ease. Stay on top of your financial goals.",
+      description:
+          "Track your income, expenses, and manage your money with ease. Stay on top of your financial goals.",
       icon: Icons.account_balance_wallet,
       color: Colors.teal,
     ),
     IntroSlide(
       title: "Smart Transaction Tracking",
       subtitle: "Organize your finances",
-      description: "Categorize transactions, add notes, and get detailed insights into your spending patterns.",
+      description:
+          "Categorize transactions, add notes, and get detailed insights into your spending patterns.",
       icon: Icons.analytics,
       color: Colors.blue,
     ),
     IntroSlide(
       title: "Person-to-Person Tracking",
       subtitle: "Manage shared expenses",
-      description: "Track money you owe or are owed by others. Perfect for roommates, friends, and family.",
+      description:
+          "Track money you owe or are owed by others. Perfect for roommates, friends, and family.",
       icon: Icons.people,
       color: Colors.green,
     ),
     IntroSlide(
       title: "Beautiful Analytics",
       subtitle: "Visualize your data",
-      description: "Charts and graphs help you understand your spending habits and financial trends.",
+      description:
+          "Charts and graphs help you understand your spending habits and financial trends.",
       icon: Icons.pie_chart,
       color: Colors.orange,
     ),
     IntroSlide(
       title: "Fully Offline",
       subtitle: "Your data stays private",
-      description: "All your financial data is stored locally on your device. No internet required, complete privacy.",
+      description:
+          "All your financial data is stored locally on your device. No internet required, complete privacy.",
       icon: Icons.security,
       color: Colors.purple,
     ),
     IntroSlide(
+      title: "Auto Transaction Detection",
+      subtitle: "Smart & Automated",
+      description:
+          "Automatically detect transactions from banking notifications. No more manual entry - your transactions are captured instantly!",
+      icon: Icons.auto_awesome,
+      color: Colors.amber,
+    ),
+    IntroSlide(
       title: "Ready to Start?",
       subtitle: "Let's begin your journey",
-      description: "You're all set! Start tracking your finances and take control of your money today.",
+      description:
+          "You're all set! Start tracking your finances and take control of your money today.",
       icon: Icons.rocket_launch,
       color: Colors.indigo,
     ),
@@ -140,25 +157,20 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
       final box = await Hive.openBox('settings');
       await box.put('introCompleted', true);
       await box.put('introCompletedAt', DateTime.now().millisecondsSinceEpoch);
-      
-      // Close loading dialog
+
+      // Show auto-detection setup dialog
       if (mounted) {
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(); // Close loading dialog
+        await _showAutoDetectionSetup(context);
       }
-      
-      // Navigate to main app
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const RootNavigation()),
-        );
-      }
+
+      // Navigation will be handled by _showAutoDetectionSetup or _navigateToMainApp
     } catch (e) {
       // Close loading dialog if there's an error
       if (mounted) {
         Navigator.of(context).pop();
       }
-      
+
       // Show error dialog
       if (mounted) {
         showDialog(
@@ -196,6 +208,147 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
     }
   }
 
+  Future<void> _showAutoDetectionSetup(BuildContext context) async {
+    final theme = Theme.of(context);
+    final isDark = context.watch<AppThemeProvider>().isDarkMode;
+
+    return showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: theme.dialogBackgroundColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.auto_awesome, color: Colors.amber, size: 24),
+            const SizedBox(width: 8),
+            Text(
+              "Enable Auto Detection?",
+              style: GoogleFonts.nunito(
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Would you like to enable automatic transaction detection?",
+              style: GoogleFonts.nunito(
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white70 : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildFeatureItem("🔔 Monitor notifications",
+                "Detects banking transactions automatically"),
+            _buildFeatureItem("💰 Smart categorization",
+                "Categorizes transactions based on bank keywords"),
+            _buildFeatureItem("⚡ Real-time detection",
+                "Captures transactions as they happen"),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amber.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber.withOpacity(0.3)),
+              ),
+              child: Text(
+                "💡 You can enable this later in Settings if you skip now.",
+                style: GoogleFonts.nunito(
+                  fontSize: 12,
+                  color: Colors.amber.shade700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            child: Text(
+              "Skip for now",
+              style: TextStyle(color: theme.colorScheme.primary),
+            ),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.pop(context);
+              _navigateToMainApp();
+            },
+          ),
+          ElevatedButton(
+            child: const Text("Enable"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              HapticFeedback.lightImpact();
+              try {
+                // Request permissions
+                await NativeBridge.requestNotificationPermission();
+                await NativeBridge.requestBatteryOptimization();
+
+                // Enable auto-detection
+                await TransactionDetectionService.setEnabled(true);
+
+                Navigator.pop(context);
+                _navigateToMainApp();
+              } catch (e) {
+                // If there's an error, still proceed to main app
+                Navigator.pop(context);
+                _navigateToMainApp();
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureItem(String title, String subtitle) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.nunito(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.nunito(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToMainApp() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const RootNavigation()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -229,7 +382,7 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
                 ),
               ),
             ),
-            
+
             // Page content
             Expanded(
               child: PageView.builder(
@@ -242,7 +395,7 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
                 },
               ),
             ),
-            
+
             // Page indicator and buttons
             Container(
               padding: const EdgeInsets.all(24),
@@ -259,17 +412,17 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
                         width: _currentPage == index ? 24 : 8,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: _currentPage == index 
-                              ? _slides[index].color 
+                          color: _currentPage == index
+                              ? _slides[index].color
                               : theme.colorScheme.outline.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   // Navigation buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -295,7 +448,7 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
                         )
                       else
                         const SizedBox(width: 80),
-                      
+
                       // Next/Get Started button
                       ElevatedButton(
                         onPressed: () {
@@ -312,14 +465,17 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _slides[_currentPage].color,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 32, vertical: 16),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                           elevation: 4,
                         ),
                         child: Text(
-                          _currentPage < _slides.length - 1 ? 'Next' : 'Get Started',
+                          _currentPage < _slides.length - 1
+                              ? 'Next'
+                              : 'Get Started',
                           style: GoogleFonts.nunito(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -351,10 +507,14 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: useAdaptive ? primary.withOpacity(0.1) : slide.color.withOpacity(0.1),
+              color: useAdaptive
+                  ? primary.withOpacity(0.1)
+                  : slide.color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(60),
               border: Border.all(
-                color: useAdaptive ? primary.withOpacity(0.3) : slide.color.withOpacity(0.3),
+                color: useAdaptive
+                    ? primary.withOpacity(0.3)
+                    : slide.color.withOpacity(0.3),
                 width: 2,
               ),
             ),
@@ -364,7 +524,9 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: useAdaptive ? primary.withOpacity(0.1) : slide.color.withOpacity(0.1),
+                    color: useAdaptive
+                        ? primary.withOpacity(0.1)
+                        : slide.color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(58),
                   ),
                   child: Icon(
@@ -376,9 +538,9 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 40),
-          
+
           // Title
           Text(
             slide.title,
@@ -389,9 +551,9 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
             ),
             textAlign: TextAlign.center,
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           // Subtitle
           Text(
             slide.subtitle,
@@ -402,9 +564,9 @@ class _IntroPageState extends State<IntroPage> with TickerProviderStateMixin {
             ),
             textAlign: TextAlign.center,
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Description
           Text(
             slide.description,
@@ -435,4 +597,4 @@ class IntroSlide {
     required this.icon,
     required this.color,
   });
-} 
+}

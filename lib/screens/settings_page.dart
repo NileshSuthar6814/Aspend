@@ -20,9 +20,13 @@ import '../providers/person_provider.dart';
 import '../providers/person_transaction_provider.dart';
 import '../providers/transaction_provider.dart';
 import '../services/pdf_service.dart';
+import '../services/transaction_detection_service.dart';
+import '../services/native_bridge.dart';
 import 'package:zoom_tap_animation/zoom_tap_animation.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:local_auth/local_auth.dart';
+import '../utils/responsive_utils.dart';
+import '../utils/error_handler.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -48,11 +52,55 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _setAppLockEnabled(bool enabled) async {
-    final box = await Hive.openBox('settings');
-    await box.put('appLockEnabled', enabled);
-    setState(() {
-      _appLockEnabled = enabled;
-    });
+    try {
+      if (enabled) {
+        final localAuth = LocalAuthentication();
+        final canCheckBiometrics = await localAuth.canCheckBiometrics;
+        final canCheckDeviceSupport = await localAuth.isDeviceSupported();
+
+        if (!canCheckDeviceSupport) {
+          ErrorHandler.showErrorSnackBar(context,
+              'Biometric authentication is not supported on this device');
+          return;
+        }
+
+        if (!canCheckBiometrics) {
+          ErrorHandler.showErrorSnackBar(
+              context, 'No biometric authentication methods available');
+          return;
+        }
+
+        final didAuthenticate = await localAuth.authenticate(
+          localizedReason: 'Authenticate to enable app lock',
+          options: const AuthenticationOptions(
+            biometricOnly: false,
+            stickyAuth: true,
+          ),
+        );
+
+        if (!didAuthenticate) {
+          ErrorHandler.showErrorSnackBar(
+              context, 'Authentication failed. App lock not enabled.');
+          return;
+        }
+      }
+
+      final box = await Hive.openBox('settings');
+      await box.put('appLockEnabled', enabled);
+      setState(() {
+        _appLockEnabled = enabled;
+      });
+
+      ErrorHandler.showSuccessSnackBar(
+          context,
+          enabled
+              ? 'App lock enabled successfully'
+              : 'App lock disabled successfully');
+    } catch (e) {
+      ErrorHandler.handleError(context, e,
+          customMessage:
+              'Failed to ${enabled ? 'enable' : 'disable'} app lock');
+    }
   }
 
   @override
@@ -69,7 +117,7 @@ class _SettingsPageState extends State<SettingsPage> {
         slivers: [
           // Enhanced App Bar
           SliverAppBar(
-            expandedHeight: 100,
+            expandedHeight: ResponsiveUtils.getResponsiveAppBarHeight(context),
             floating: true,
             pinned: true,
             elevation: 1,
@@ -79,7 +127,12 @@ class _SettingsPageState extends State<SettingsPage> {
                 'Settings',
                 style: GoogleFonts.nunito(
                   fontWeight: FontWeight.bold,
-                  fontSize: 24,
+                  fontSize: ResponsiveUtils.getResponsiveFontSize(
+                    context,
+                    mobile: 24,
+                    tablet: 28,
+                    desktop: 32,
+                  ),
                   color: theme.colorScheme.onSurface,
                 ),
               ),
@@ -143,6 +196,13 @@ class _SettingsPageState extends State<SettingsPage> {
                   _buildAdaptiveColorSwitch(context),
                   const SizedBox(height: 18),
                   _buildAppLockSection(context),
+                  const SizedBox(height: 18),
+                  // Auto Detection Section
+                  _buildSectionHeader(
+                      "Auto Transaction Detection", Icons.auto_awesome),
+                  const SizedBox(height: 10),
+                  _buildAutoDetectionSection(context),
+                  const SizedBox(height: 18),
                   // Backup & Export Section
                   _buildSectionHeader("Backup & Export", Icons.backup),
                   const SizedBox(height: 10),
@@ -395,6 +455,213 @@ class _SettingsPageState extends State<SettingsPage> {
             _showSnackBar(context, 'Error: \n$e');
           }
         },
+      ),
+    );
+  }
+
+  Widget _buildAutoDetectionSection(BuildContext context) {
+    return Column(
+      children: [
+        _buildSettingsTile(
+          icon: Icons.auto_awesome,
+          title: "Auto Transaction Detection",
+          subtitle: "Automatically detect transactions from notifications",
+          onTap: null,
+          trailing: FutureBuilder<bool>(
+            future: TransactionDetectionService.isEnabled(),
+            builder: (context, snapshot) {
+              final isEnabled = snapshot.data ?? false;
+              return Switch(
+                value: isEnabled,
+                onChanged: (value) async {
+                  HapticFeedback.lightImpact();
+                  try {
+                    if (value) {
+                      // Show info dialog first
+                      await _showAutoDetectionInfoDialog(context);
+
+                      // Request notification permission
+                      final notificationPermission =
+                          await NativeBridge.requestNotificationPermission();
+                      if (!notificationPermission) {
+                        _showSnackBar(context,
+                            'Notification permission is required for auto-detection');
+                        return;
+                      }
+
+                      // Check if notification access is enabled
+                      final notificationAccess =
+                          await NativeBridge.checkNotificationPermission();
+                      if (!notificationAccess) {
+                        _showSnackBar(context,
+                            'Please enable notification access in system settings');
+                        return;
+                      }
+
+                      // Request battery optimization exemption
+                      await NativeBridge.requestBatteryOptimization();
+                    }
+
+                    await TransactionDetectionService.setEnabled(value);
+                    _showSnackBar(
+                        context,
+                        value
+                            ? 'Auto-detection enabled!'
+                            : 'Auto-detection disabled!');
+
+                    // Refresh the UI
+                    setState(() {});
+                  } catch (e) {
+                    _showSnackBar(context, 'Error: $e');
+                  }
+                },
+              );
+            },
+          ),
+        ),
+        _buildSettingsTile(
+          icon: Icons.history,
+          title: "Process Recent Data",
+          subtitle: "Scan recent notifications for transactions",
+          onTap: () async {
+            HapticFeedback.lightImpact();
+            try {
+              await TransactionDetectionService.processRecentSms();
+              _showSnackBar(context, 'Recent data processed successfully!');
+            } catch (e) {
+              _showSnackBar(context, 'Error processing data: $e');
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showAutoDetectionInfoDialog(BuildContext context) async {
+    final theme = Theme.of(context);
+    final isDark = context.watch<AppThemeProvider>().isDarkMode;
+
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: theme.dialogBackgroundColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.auto_awesome, color: Colors.blue, size: 24),
+            const SizedBox(width: 8),
+            Text(
+              "Auto Transaction Detection",
+              style: GoogleFonts.nunito(
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black,
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "This feature will automatically detect transactions from:",
+              style: GoogleFonts.nunito(
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white70 : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _buildInfoItem(
+                "🔔 App notifications", "Monitors payment app notifications"),
+            _buildInfoItem("📱 Banking notifications",
+                "Detects UPI, ATM, and banking transactions"),
+            _buildInfoItem("💰 Automatic categorization",
+                "Categorizes transactions based on bank keywords"),
+            const SizedBox(height: 12),
+            Text(
+              "Required permissions:",
+              style: GoogleFonts.nunito(
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white70 : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _buildInfoItem(
+                "🔔 Notification access", "To monitor payment notifications"),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              ),
+              child: Text(
+                "💡 Tip: The app will only process messages that contain transaction amounts and keywords like 'credited', 'debited', 'paid', etc.",
+                style: GoogleFonts.nunito(
+                  fontSize: 12,
+                  color: Colors.blue.shade700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            child: Text(
+              "Cancel",
+              style: TextStyle(color: theme.colorScheme.primary),
+            ),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.pop(context);
+            },
+          ),
+          ElevatedButton(
+            child: const Text("Enable"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(String title, String subtitle) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.nunito(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.nunito(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

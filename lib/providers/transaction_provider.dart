@@ -63,7 +63,8 @@ class TransactionProvider with ChangeNotifier {
 
   double get totalSpend {
     if (_cachedTotalSpend == null || _isDirty) {
-      final spendList = _cachedSpends ?? _transactions.where((t) => !t.isIncome).toList();
+      final spendList =
+          _cachedSpends ?? _transactions.where((t) => !t.isIncome).toList();
       _cachedTotalSpend = spendList.fold(0.0, (sum, tx) => sum! + tx.amount);
     }
     return _cachedTotalSpend ?? 0.0;
@@ -71,7 +72,8 @@ class TransactionProvider with ChangeNotifier {
 
   double get totalIncome {
     if (_cachedTotalIncome == null || _isDirty) {
-      final incomeList = _cachedIncomes ?? _transactions.where((t) => t.isIncome).toList();
+      final incomeList =
+          _cachedIncomes ?? _transactions.where((t) => t.isIncome).toList();
       _cachedTotalIncome = incomeList.fold(0.0, (sum, tx) => sum! + tx.amount);
     }
     return _cachedTotalIncome ?? 0.0;
@@ -106,7 +108,8 @@ class TransactionProvider with ChangeNotifier {
 
       // Load current balance from Hive
       final balanceBox = Hive.box<double>('balanceBox');
-      _currentBalance = balanceBox.get('currentBalance', defaultValue: 0.0) ?? 0.0;
+      _currentBalance =
+          balanceBox.get('currentBalance', defaultValue: 0.0) ?? 0.0;
 
       _markDirty();
       notifyListeners();
@@ -117,7 +120,8 @@ class TransactionProvider with ChangeNotifier {
       final txBox = Hive.box<Transaction>('transactions');
       final balanceBox = Hive.box<double>('balanceBox');
       _transactions = txBox.values.toList();
-      _currentBalance = balanceBox.get('currentBalance', defaultValue: 0.0) ?? 0.0;
+        _currentBalance =
+            balanceBox.get('currentBalance', defaultValue: 0.0) ?? 0.0;
         _markDirty();
         notifyListeners();
       } catch (fallbackError) {
@@ -282,8 +286,25 @@ class TransactionProvider with ChangeNotifier {
 
   void _updateHomeWidget() async {
     try {
-      await HomeWidget.saveWidgetData('balance', _currentBalance.toString());
-      await HomeWidget.saveWidgetData('transaction_count', _transactions.length.toString());
+      // Format balance with currency symbol
+      final formattedBalance = '₹${_currentBalance.toStringAsFixed(2)}';
+
+      await HomeWidget.saveWidgetData('balance', formattedBalance);
+      await HomeWidget.saveWidgetData(
+          'transaction_count', _transactions.length.toString());
+
+      // Calculate income and expense totals for widget
+      final totalIncome = _transactions
+          .where((t) => t.isIncome)
+          .fold(0.0, (sum, t) => sum + t.amount);
+      final totalExpenses = _transactions
+          .where((t) => !t.isIncome)
+          .fold(0.0, (sum, t) => sum + t.amount);
+
+      await HomeWidget.saveWidgetData('total_income', totalIncome.toString());
+      await HomeWidget.saveWidgetData(
+          'total_expenses', totalExpenses.toString());
+
       await HomeWidget.updateWidget(
         androidName: 'HomeWidgetProvider',
         iOSName: 'HomeWidget',
@@ -294,14 +315,16 @@ class TransactionProvider with ChangeNotifier {
   }
 
   // Optimized transaction grouping method
-  Map<String, List<Transaction>> _groupTransactionsByDate(List<Transaction> transactions) {
+  Map<String, List<Transaction>> _groupTransactionsByDate(
+      List<Transaction> transactions) {
     final Map<String, List<Transaction>> grouped = {};
     final DateTime now = DateTime.now();
     final DateTime today = DateTime(now.year, now.month, now.day);
     final DateTime yesterday = today.subtract(const Duration(days: 1));
     
     for (var tx in transactions) {
-      final DateTime txDate = DateTime(tx.date.year, tx.date.month, tx.date.day);
+      final DateTime txDate =
+          DateTime(tx.date.year, tx.date.month, tx.date.day);
       String formattedDate;
       
       if (txDate == today) {
@@ -319,8 +342,18 @@ class TransactionProvider with ChangeNotifier {
 
   String _formatDate(DateTime date) {
     final months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }

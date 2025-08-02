@@ -12,6 +12,7 @@ import '../providers/person_provider.dart';
 import '../providers/theme_provider.dart';
 //import '../providers/person_transaction_provider.dart';
 import '../person/person_details_page.dart';
+import '../utils/responsive_utils.dart';
 
 class PeopleTab extends StatefulWidget {
   const PeopleTab({super.key});
